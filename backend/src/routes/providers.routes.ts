@@ -1,0 +1,9 @@
+import { Router } from 'express';
+import { getProviders, getProvider, createProvider, updateProvider } from '../controllers/providers.controller';
+import { authenticate } from '../middleware/auth';
+export const providersRouter = Router();
+providersRouter.use(authenticate);
+providersRouter.get('/', getProviders);
+providersRouter.post('/', createProvider);
+providersRouter.get('/:id', getProvider);
+providersRouter.patch('/:id', updateProvider);

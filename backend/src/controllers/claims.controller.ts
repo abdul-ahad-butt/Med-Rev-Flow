@@ -1,0 +1,303 @@
+import { Response, NextFunction } from 'express';
+import { prisma } from '../config/prisma';
+import { AuthRequest } from '../middleware/auth';
+import { paginate, paginatedResponse, createAuditLog } from '../utils/helpers';
+import { ClaimStatus } from '@prisma/client';
+
+export const getClaims = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId } = req.user!;
+    const {
+      page = '1', limit = '20', search = '', status = '', providerId = '',
+      insuranceId = '', dateFrom = '', dateTo = '', sortBy = 'createdAt', sortOrder = 'desc',
+    } = req.query as Record<string, string>;
+
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const { skip, take } = paginate(pageNum, limitNum);
+
+    const where: Record<string, unknown> = { provider: { practiceId } };
+
+    if (search) {
+      where.OR = [
+        { claimNumber: { contains: search, mode: 'insensitive' } },
+        { patient: { firstName: { contains: search, mode: 'insensitive' } } },
+        { patient: { lastName: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+    if (status) where.status = status as ClaimStatus;
+    if (providerId) where.providerId = providerId;
+    if (insuranceId) where.insuranceId = insuranceId;
+    if (dateFrom || dateTo) {
+      where.dateOfService = {};
+      if (dateFrom) (where.dateOfService as Record<string, Date>).gte = new Date(dateFrom);
+      if (dateTo) (where.dateOfService as Record<string, Date>).lte = new Date(dateTo);
+    }
+
+    const validSortFields = ['createdAt', 'dateOfService', 'billedAmount', 'status', 'claimNumber'];
+    const orderByField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+
+    const [claims, total] = await Promise.all([
+      prisma.claim.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { [orderByField]: sortOrder === 'asc' ? 'asc' : 'desc' },
+        include: {
+          patient: { select: { id: true, firstName: true, lastName: true, patientNumber: true } },
+          provider: { select: { id: true, firstName: true, lastName: true } },
+          insurance: { select: { id: true, name: true } },
+        },
+      }),
+      prisma.claim.count({ where }),
+    ]);
+
+    res.json(paginatedResponse(claims, total, pageNum, limitNum));
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId } = req.user!;
+    const { id } = req.params;
+
+    const claim = await prisma.claim.findFirst({
+      where: { id, provider: { practiceId } },
+      include: {
+        patient: true,
+        provider: true,
+        insurance: true,
+        statusHistory: { orderBy: { changedAt: 'asc' } },
+        denials: {
+          include: {
+            notes: { include: { user: { select: { firstName: true, lastName: true } } } },
+            appeals: true,
+            assignedTo: { select: { firstName: true, lastName: true } },
+          },
+        },
+        payments: { orderBy: { paidDate: 'desc' } },
+      },
+    });
+
+    if (!claim) return res.status(404).json({ error: 'Claim not found' });
+
+    res.json({ data: claim });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId, userId } = req.user!;
+
+    const claimNumber = `CLM-${Date.now().toString().slice(-8)}`;
+
+    const claim = await prisma.claim.create({
+      data: {
+        ...req.body,
+        claimNumber,
+      },
+    });
+
+    await prisma.claimStatusHistory.create({
+      data: { claimId: claim.id, toStatus: claim.status, notes: 'Claim created' },
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'CLAIM_CREATED',
+      resourceType: 'Claim',
+      resourceId: claim.id,
+      newValues: req.body,
+    });
+
+    res.status(201).json({ data: claim });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId, userId } = req.user!;
+    const { id } = req.params;
+
+    const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
+    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+
+    const claim = await prisma.claim.update({
+      where: { id },
+      data: req.body,
+    });
+
+    await createAuditLog({
+      userId,
+      action: 'CLAIM_UPDATED',
+      resourceType: 'Claim',
+      resourceId: claim.id,
+      oldValues: existing,
+      newValues: req.body,
+    });
+
+    res.json({ data: claim });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId, userId } = req.user!;
+    const { id } = req.params;
+
+    const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
+    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+
+    if (existing.status !== 'DRAFT') {
+      return res.status(400).json({ error: 'Only draft claims can be deleted' });
+    }
+
+    await prisma.claim.delete({ where: { id } });
+
+    await createAuditLog({
+      userId,
+      action: 'CLAIM_DELETED',
+      resourceType: 'Claim',
+      resourceId: id,
+    });
+
+    res.json({ message: 'Claim deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateClaimStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId, userId } = req.user!;
+    const { id } = req.params;
+    const { status, notes } = req.body as { status: ClaimStatus; notes?: string };
+
+    const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
+    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+
+    const claim = await prisma.claim.update({
+      where: { id },
+      data: { status },
+    });
+
+    await prisma.claimStatusHistory.create({
+      data: { claimId: id, fromStatus: existing.status, toStatus: status, notes },
+    });
+
+    // Auto-create denial if status is DENIED
+    if (status === 'DENIED') {
+      await prisma.denial.create({
+        data: {
+          claimId: id,
+          denialReason: notes || 'Claim denied',
+          deniedAmount: existing.billedAmount,
+          status: 'NEW',
+          priority: 'HIGH',
+        },
+      });
+
+      // Create notification for billing staff
+      const billingUsers = await prisma.user.findMany({
+        where: { practiceId, role: { in: ['BILLING_STAFF', 'PRACTICE_MANAGER', 'PRACTICE_OWNER'] } },
+        select: { id: true },
+      });
+
+      await prisma.notification.createMany({
+        data: billingUsers.map(u => ({
+          userId: u.id,
+          type: 'CLAIM',
+          title: 'Claim Denied',
+          message: `Claim ${existing.claimNumber} has been denied.`,
+        })),
+      });
+    }
+
+    await createAuditLog({
+      userId,
+      action: 'CLAIM_STATUS_CHANGED',
+      resourceType: 'Claim',
+      resourceId: id,
+      oldValues: { status: existing.status },
+      newValues: { status },
+    });
+
+    res.json({ data: claim });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const addClaimNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId } = req.user!;
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
+    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+
+    const claim = await prisma.claim.update({
+      where: { id },
+      data: { notes: existing.notes ? `${existing.notes}\n\n${notes}` : notes },
+    });
+
+    res.json({ data: claim });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const exportClaims = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { practiceId } = req.user!;
+    const { status = '', dateFrom = '', dateTo = '' } = req.query as Record<string, string>;
+
+    const where: Record<string, unknown> = { provider: { practiceId } };
+    if (status) where.status = status as ClaimStatus;
+    if (dateFrom || dateTo) {
+      where.dateOfService = {};
+      if (dateFrom) (where.dateOfService as Record<string, Date>).gte = new Date(dateFrom);
+      if (dateTo) (where.dateOfService as Record<string, Date>).lte = new Date(dateTo);
+    }
+
+    const claims = await prisma.claim.findMany({
+      where,
+      include: {
+        patient: { select: { firstName: true, lastName: true } },
+        provider: { select: { firstName: true, lastName: true } },
+        insurance: { select: { name: true } },
+      },
+      orderBy: { dateOfService: 'desc' },
+    });
+
+    const csvRows = [
+      ['Claim ID', 'Patient', 'Date of Service', 'Provider', 'Insurance', 'Billed', 'Allowed', 'Paid', 'Status'].join(','),
+      ...claims.map(c => [
+        c.claimNumber,
+        `"${c.patient.lastName}, ${c.patient.firstName}"`,
+        c.dateOfService.toISOString().split('T')[0],
+        `"${c.provider.firstName} ${c.provider.lastName}"`,
+        `"${c.insurance.name}"`,
+        c.billedAmount,
+        c.allowedAmount || '',
+        c.paidAmount || '',
+        c.status,
+      ].join(',')),
+    ];
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="claims.csv"');
+    res.send(csvRows.join('\n'));
+  } catch (error) {
+    next(error);
+  }
+};

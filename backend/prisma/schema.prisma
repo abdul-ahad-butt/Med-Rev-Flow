@@ -1,0 +1,396 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Practice {
+  id        String   @id @default(uuid())
+  name      String
+  taxId     String?
+  npi       String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  phone     String?
+  email     String?
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users        User[]
+  providers    Provider[]
+  patients     Patient[]
+  leads        Lead[]
+  settings     PracticeSetting[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  practiceId   String
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         String   @default("VIEWER") // ADMIN, BILLING, PROVIDER, STAFF, VIEWER
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  practice         Practice       @relation(fields: [practiceId], references: [id])
+  tasksAssigned    Task[]         @relation("AssignedTasks")
+  tasksCreated     Task[]         @relation("CreatedTasks")
+  denialAssignments Denial[]      @relation("AssignedDenials")
+  auditLogs        AuditLog[]
+  notes            Note[]
+  notifications    Notification[]
+  messagesSent     Message[]      @relation("MessagesSent")
+  messagesReceived Message[]      @relation("MessagesReceived")
+
+  @@index([practiceId])
+}
+
+model Provider {
+  id             String   @id @default(uuid())
+  practiceId     String
+  firstName      String
+  lastName       String
+  npi            String   @unique
+  specialty      String?
+  licenseNumber  String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  practice       Practice  @relation(fields: [practiceId], references: [id])
+  appointments   Appointment[]
+  claims         Claim[]
+
+  @@index([practiceId])
+}
+
+model Patient {
+  id             String   @id @default(uuid())
+  practiceId     String
+  firstName      String
+  lastName       String
+  dateOfBirth    DateTime?
+  gender         String?  // MALE, FEMALE, OTHER
+  ssn            String?  // Encrypted or masked
+  addressLine1   String?
+  addressLine2   String?
+  city           String?
+  state          String?
+  zipCode        String?
+  phone          String?
+  email          String?
+  memberId       String?
+  groupNumber    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  practice           Practice             @relation(fields: [practiceId], references: [id])
+  appointments       Appointment[]
+  claims             Claim[]
+  priorAuthorizations PriorAuthorization[]
+
+  @@index([practiceId])
+}
+
+model Appointment {
+  id             String   @id @default(uuid())
+  patientId      String
+  providerId     String
+  startTime      DateTime
+  endTime        DateTime
+  visitType      String?
+  status         String   @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELED, NO_SHOW
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  patient        Patient   @relation(fields: [patientId], references: [id])
+  provider       Provider  @relation(fields: [providerId], references: [id])
+
+  @@index([patientId])
+  @@index([providerId])
+}
+
+model Insurance {
+  id             String   @id @default(uuid())
+  name           String
+  payerId        String?
+  address        String?
+  city           String?
+  state          String?
+  zipCode        String?
+  phone          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  claims         Claim[]
+  policies       PatientPolicy[]
+}
+
+model PatientPolicy {
+  id             String   @id @default(uuid())
+  insuranceId    String
+  patientId      String
+  policyNumber   String
+  groupNumber    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  insurance      Insurance @relation(fields: [insuranceId], references: [id])
+}
+
+model Claim {
+  id              String   @id @default(uuid())
+  claimNumber     String   @unique
+  patientId       String
+  providerId      String
+  insuranceId     String?
+  dateOfService   DateTime
+  submittedDate   DateTime?
+  billedAmount    Float
+  allowedAmount   Float?
+  paidAmount      Float?
+  patientBalance  Float?
+  status          String   @default("DRAFT") // DRAFT, SUBMITTED, ACCEPTED, PENDING, PAID, DENIED, REJECTED
+  icdCodes        String // JSON string
+  cptCodes        String // JSON string
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient         Patient       @relation(fields: [patientId], references: [id])
+  provider        Provider      @relation(fields: [providerId], references: [id])
+  insurance       Insurance?    @relation(fields: [insuranceId], references: [id])
+  denials         Denial[]
+  payments        Payment[]
+  statusHistory   ClaimStatusHistory[]
+
+  @@index([patientId])
+  @@index([providerId])
+  @@index([insuranceId])
+  @@index([status])
+}
+
+model ClaimStatusHistory {
+  id              String   @id @default(uuid())
+  claimId         String
+  fromStatus      String?
+  toStatus        String
+  changedAt       DateTime @default(now())
+  notes           String?
+  
+  claim           Claim    @relation(fields: [claimId], references: [id])
+
+  @@index([claimId])
+}
+
+model Denial {
+  id              String   @id @default(uuid())
+  claimId         String
+  denialDate      DateTime
+  denialReason    String
+  denialCode      String?
+  deniedAmount    Float
+  recoveredAmount Float    @default(0)
+  status          String   @default("NEW") // NEW, UNDER_REVIEW, DOCUMENTATION_NEEDED, APPEAL_SUBMITTED, RESOLVED, WRITTEN_OFF
+  priority        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  assignedToId    String?
+  followUpDate    DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  claim           Claim    @relation(fields: [claimId], references: [id])
+  assignedTo      User?    @relation("AssignedDenials", fields: [assignedToId], references: [id])
+  notes           Note[]
+  appeals         Appeal[]
+
+  @@index([claimId])
+  @@index([assignedToId])
+  @@index([status])
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  claimId          String
+  paidDate         DateTime
+  amount           Float
+  adjustmentAmount Float?
+  paymentMethod    String?  // EFT, CHECK, CREDIT_CARD
+  eraNumber        String?
+  checkNumber      String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  claim            Claim    @relation(fields: [claimId], references: [id])
+
+  @@index([claimId])
+}
+
+model Task {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  dueDate         DateTime?
+  assignedToId    String?
+  createdById     String
+  priority        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status          String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignedTo      User?    @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  createdBy       User     @relation("CreatedTasks", fields: [createdById], references: [id])
+
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
+}
+
+model Note {
+  id              String   @id @default(uuid())
+  content         String
+  userId          String
+  denialId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+  denial          Denial?  @relation(fields: [denialId], references: [id])
+
+  @@index([userId])
+  @@index([denialId])
+}
+
+model Appeal {
+  id              String   @id @default(uuid())
+  denialId        String
+  submittedDate   DateTime
+  reason          String
+  outcome         String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  denial          Denial   @relation(fields: [denialId], references: [id])
+
+  @@index([denialId])
+}
+
+model PriorAuthorization {
+  id              String   @id @default(uuid())
+  patientId       String
+  insuranceId     String?
+  authNumber      String?
+  service         String
+  requestedDate   DateTime
+  validFrom       DateTime?
+  validTo         DateTime?
+  expirationDate  DateTime?
+  status          String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, DENIED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  patient         Patient  @relation(fields: [patientId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+}
+
+model Message {
+  id              String   @id @default(uuid())
+  senderId        String
+  receiverId      String
+  subject         String?
+  content         String
+  isRead          Boolean  @default(false)
+  patientId       String?
+  priority        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status          String   @default("TODO")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sender          User     @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver        User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Notification {
+  id              String   @id @default(uuid())
+  userId          String
+  title           String
+  message         String
+  isRead          Boolean  @default(false)
+  type            String   @default("GENERAL") // GENERAL, TASK, DENIAL, CLAIM, SYSTEM
+  link            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  userId          String
+  action          String
+  entityType      String
+  entityId        String
+  details         String? // JSON string
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+}
+
+model Lead {
+  id              String   @id @default(uuid())
+  practiceId      String
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  source          String?
+  service         String?
+  status          String   @default("NEW") // NEW, CONTACTED, QUALIFIED, CONVERTED, CLOSED
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  practice        Practice @relation(fields: [practiceId], references: [id])
+
+  @@index([practiceId])
+  @@index([status])
+}
+
+model PracticeSetting {
+  id              String   @id @default(uuid())
+  practiceId      String
+  key             String
+  value           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  practice        Practice @relation(fields: [practiceId], references: [id])
+
+  @@unique([practiceId, key])
+}

@@ -1,0 +1,178 @@
+import { useState } from 'react'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard, TrendingUp, FileText, AlertCircle, DollarSign,
+  Shield, Users, Calendar, UserCog, Building2, LineChart, BarChart3,
+  CheckSquare, MessageSquare, Settings, LogOut, HelpCircle, Bell,
+  Search, ChevronDown, Menu, X, Activity,
+} from 'lucide-react'
+import { useAuthStore } from '../store/auth.store'
+import { getInitials } from '../utils/cn'
+import api from '../api/client'
+import toast from 'react-hot-toast'
+
+const NAV_ITEMS = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/app/dashboard' },
+  { label: 'Revenue Cycle', icon: TrendingUp, path: '/app/revenue-cycle' },
+  { label: 'Claims', icon: FileText, path: '/app/claims' },
+  { label: 'Denials', icon: AlertCircle, path: '/app/denials' },
+  { label: 'Accounts Receivable', icon: DollarSign, path: '/app/ar' },
+  { label: 'Prior Authorization', icon: Shield, path: '/app/prior-authorizations' },
+  { label: 'Patients', icon: Users, path: '/app/patients' },
+  { label: 'Appointments', icon: Calendar, path: '/app/appointments' },
+  { label: 'Providers', icon: UserCog, path: '/app/providers' },
+  { label: 'Insurance', icon: Building2, path: '/app/insurance' },
+  { label: 'Marketing & SEO', icon: LineChart, path: '/app/marketing' },
+  { label: 'Leads & CRM', icon: Activity, path: '/app/leads' },
+  { label: 'Reports', icon: BarChart3, path: '/app/reports' },
+  { label: 'Tasks', icon: CheckSquare, path: '/app/tasks' },
+  { label: 'Messages', icon: MessageSquare, path: '/app/messages' },
+  { label: 'Settings', icon: Settings, path: '/app/settings' },
+]
+
+export function AppLayout() {
+  const { user, clearAuth } = useAuthStore()
+  const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout')
+    } finally {
+      clearAuth()
+      navigate('/login')
+      toast.success('Logged out successfully')
+    }
+  }
+
+  return (
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'w-60' : 'w-16'} flex-shrink-0 bg-white border-r border-slate-200 flex flex-col transition-all duration-200`}>
+        {/* Logo */}
+        <div className="h-14 flex items-center px-4 border-b border-slate-200 flex-shrink-0">
+          {sidebarOpen ? (
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Activity className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-bold text-slate-900 text-base">MedRevFlow</span>
+            </div>
+          ) : (
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center mx-auto">
+              <Activity className="w-4 h-4 text-white" />
+            </div>
+          )}
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-3 px-2 sidebar-scroll space-y-0.5">
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `sidebar-item ${isActive ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-2' : ''}`
+              }
+              title={!sidebarOpen ? item.label : undefined}
+            >
+              <item.icon className="w-4 h-4 flex-shrink-0" />
+              {sidebarOpen && <span className="truncate">{item.label}</span>}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Bottom section */}
+        <div className="border-t border-slate-200 py-3 px-2 space-y-0.5">
+          <NavLink
+            to="/app/audit"
+            className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-2' : ''}`}
+            title={!sidebarOpen ? 'Audit Log' : undefined}
+          >
+            <HelpCircle className="w-4 h-4 flex-shrink-0" />
+            {sidebarOpen && <span>Audit Log</span>}
+          </NavLink>
+
+          {/* User profile */}
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className={`sidebar-item w-full ${!sidebarOpen ? 'justify-center px-2' : ''}`}
+            >
+              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                {user ? getInitials(user.firstName, user.lastName) : 'U'}
+              </div>
+              {sidebarOpen && (
+                <>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="text-xs font-medium text-slate-900 truncate">{user?.firstName} {user?.lastName}</div>
+                    <div className="text-xs text-slate-500 truncate capitalize">{user?.role?.toLowerCase().replace('_', ' ')}</div>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
+                </>
+              )}
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute bottom-full left-0 right-0 mb-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top bar */}
+        <header className="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-4 flex-shrink-0">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+          >
+            {sidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+
+          {/* Search */}
+          <div className="flex-1 max-w-md relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search claims, patients, tasks..."
+              className="w-full pl-9 pr-4 py-1.5 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            {/* Practice name */}
+            {sidebarOpen && (
+              <div className="text-xs text-slate-500 hidden sm:block">
+                {user?.practiceName}
+              </div>
+            )}
+
+            {/* Notifications */}
+            <NavLink to="/app/dashboard" className="relative p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-medium">3</span>
+            </NavLink>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-y-auto p-6 page-enter">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}

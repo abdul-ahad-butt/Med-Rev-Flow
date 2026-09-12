@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { getAppointments, getAppointment, createAppointment, updateAppointment, getAppointmentStats } from '../controllers/appointments.controller';
+import { authenticate } from '../middleware/auth';
+export const appointmentsRouter = Router();
+appointmentsRouter.use(authenticate);
+appointmentsRouter.get('/', getAppointments);
+appointmentsRouter.get('/stats', getAppointmentStats);
+appointmentsRouter.post('/', createAppointment);
+appointmentsRouter.get('/:id', getAppointment);
+appointmentsRouter.patch('/:id', updateAppointment);

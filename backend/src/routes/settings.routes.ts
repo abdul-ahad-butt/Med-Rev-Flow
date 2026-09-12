@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { getPracticeSettings, updatePracticeSettings, getUsers, updateUser, getLocations, createLocation } from '../controllers/settings.controller';
+import { authenticate, authorize } from '../middleware/auth';
+export const settingsRouter = Router();
+settingsRouter.use(authenticate);
+settingsRouter.get('/practice', getPracticeSettings);
+settingsRouter.patch('/practice', authorize('PRACTICE_OWNER', 'PRACTICE_MANAGER', 'SUPER_ADMIN'), updatePracticeSettings);
+settingsRouter.get('/users', getUsers);
+settingsRouter.patch('/users/:id', authorize('PRACTICE_OWNER', 'PRACTICE_MANAGER', 'SUPER_ADMIN'), updateUser);
+settingsRouter.get('/locations', getLocations);
+settingsRouter.post('/locations', authorize('PRACTICE_OWNER', 'PRACTICE_MANAGER', 'SUPER_ADMIN'), createLocation);

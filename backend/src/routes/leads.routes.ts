@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { getLeads, getLead, createLead, updateLead, addLeadActivity, getLeadStats } from '../controllers/leads.controller';
+import { authenticate } from '../middleware/auth';
+export const leadsRouter = Router();
+leadsRouter.use(authenticate);
+leadsRouter.get('/', getLeads);
+leadsRouter.get('/stats', getLeadStats);
+leadsRouter.post('/', createLead);
+leadsRouter.get('/:id', getLead);
+leadsRouter.patch('/:id', updateLead);
+leadsRouter.post('/:id/activities', addLeadActivity);

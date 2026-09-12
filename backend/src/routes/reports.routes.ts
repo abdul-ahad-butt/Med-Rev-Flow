@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { getRevenueCycle, getClaimsReport, getDenialReport, getARReport, getProviderReport, getInsuranceReport, getPatientAcquisitionReport } from '../controllers/reports.controller';
+import { authenticate } from '../middleware/auth';
+export const reportsRouter = Router();
+reportsRouter.use(authenticate);
+reportsRouter.get('/revenue-cycle', getRevenueCycle);
+reportsRouter.get('/claims', getClaimsReport);
+reportsRouter.get('/denials', getDenialReport);
+reportsRouter.get('/ar-aging', getARReport);
+reportsRouter.get('/providers', getProviderReport);
+reportsRouter.get('/insurance', getInsuranceReport);
+reportsRouter.get('/patient-acquisition', getPatientAcquisitionReport);
