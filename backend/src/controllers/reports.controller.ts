@@ -34,7 +34,7 @@ export const getRevenueCycle = async (c: Context) => {
     const adjustments = 0; // adjustmentAmount not in Claim model
     const outstandingAR = grossCharges - payments - adjustments;
 
-    c.json({
+    return c.json({
       grossCharges,
       payments,
       adjustments,

@@ -87,7 +87,7 @@ export const getDenialStats = async (c: Context) => {
     const totalRecovered = Number(totalAgg._sum.recoveredAmount || 0);
     const recoveryRate = totalDenied > 0 ? (totalRecovered / totalDenied) * 100 : 0;
 
-    c.json({
+    return c.json({
       totalDenials: totalAgg._count,
       deniedAmount: totalDenied,
       recoveredAmount: totalRecovered,

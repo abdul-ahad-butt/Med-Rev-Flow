@@ -5,6 +5,10 @@ import { config } from './config/env';
 import { errorHandler } from './middleware/errorHandler';
 import { envStorage } from './config/envStorage';
 
+(BigInt.prototype as any).toJSON = function () {
+  return Number(this);
+};
+
 import { authRouter } from './routes/auth.routes';
 import { dashboardRouter } from './routes/dashboard.routes';
 import { claimsRouter } from './routes/claims.routes';

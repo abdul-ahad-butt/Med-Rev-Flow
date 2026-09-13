@@ -14,15 +14,16 @@ export const createError = (message: string, statusCode: number): AppError => {
 
 export const errorHandler = (err: Error | AppError, c: Context) => {
   const appError = err as AppError;
-  const statusCode = appError.statusCode || 500;
+  let statusCode = 500;
+  if (typeof appError.statusCode === 'number' && appError.statusCode >= 200 && appError.statusCode <= 599) {
+    statusCode = appError.statusCode;
+  }
   const message = appError.isOperational ? appError.message : 'Internal server error';
 
-  if (process.env.NODE_ENV === 'development') {
-    console.error('[ERROR]', err);
-  }
+  console.error('[ERROR]', err);
 
   return c.json({
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    stack: err.stack,
   }, statusCode as any);
 };

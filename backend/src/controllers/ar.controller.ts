@@ -12,7 +12,7 @@ export const getAR = async (c: Context) => {
 
 export const getARStats = async (c: Context) => {
   try {
-    c.json({
+    return c.json({
       totalAR: 0,
       totalBilled: 0,
       byBucket: [

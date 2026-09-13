@@ -159,7 +159,7 @@ export const getDashboard = async (c: Context) => {
     });
     const denialRate = totalSubmitted > 0 ? (deniedClaimsCount / totalSubmitted) * 100 : 0;
 
-    c.json({
+    return c.json({
       kpis: {
         totalRevenue: Number(totalRevenueResult._sum.amount || 0),
         monthlyRevenue: monthlyRevenue.length > 0 ? monthlyRevenue[monthlyRevenue.length - 1].revenue : 0,
