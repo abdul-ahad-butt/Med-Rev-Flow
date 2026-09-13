@@ -89,8 +89,8 @@ export const getDashboard = async (c: Context) => {
       prisma.task.findMany({
         where: { 
           OR: [
-            { assignedToId: c.get('user')!.id },
-            { createdById: c.get('user')!.id }
+            { assignedToId: c.get('user')!.userId },
+            { createdById: c.get('user')!.userId }
           ],
           status: { notIn: ['COMPLETED'] }
         },
