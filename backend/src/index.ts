@@ -31,10 +31,13 @@ app.use('*', async (c, next) => {
   return envStorage.run(c.env, next);
 });
 
-app.use('*', cors({
-  origin: config.frontendUrl,
-  credentials: true,
-}));
+app.use('*', async (c, next) => {
+  const corsMiddleware = cors({
+    origin: c.env?.FRONTEND_URL || 'https://med-rev-flow.pages.dev',
+    credentials: true,
+  });
+  return corsMiddleware(c, next);
+});
 
 if (config.nodeEnv !== 'test') {
   app.use('*', logger());
