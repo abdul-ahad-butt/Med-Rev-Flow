@@ -5,3 +5,8 @@ main = "src/index.ts"
 
 [vars]
 # Add any environment variables here
+
+[[d1_databases]]
+binding = "DB"
+database_name = "med-rev-db"
+database_id = "e5e0a6c5-c167-423d-806f-4971b6635d27"

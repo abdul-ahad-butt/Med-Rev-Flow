@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaNeon } from '@prisma/adapter-neon';
-import { Pool } from '@neondatabase/serverless';
+import { PrismaD1 } from '@prisma/adapter-d1';
 import { envStorage } from './envStorage';
 import { config } from './env';
 
@@ -10,14 +9,13 @@ export const prisma = new Proxy({} as PrismaClient, {
   get(target, prop) {
     if (!prismaInstance) {
       const env = envStorage.getStore() || {};
-      const dbUrl = env.DATABASE_URL || process.env.DATABASE_URL || config.databaseUrl;
+      const d1Db = env.DB;
       
-      if (!dbUrl) {
-        throw new Error("DATABASE_URL is not configured in the environment");
+      if (!d1Db) {
+        throw new Error("D1 database binding 'DB' is not configured in the environment");
       }
       
-      const pool = new Pool({ connectionString: dbUrl });
-      const adapter = new PrismaNeon(pool);
+      const adapter = new PrismaD1(d1Db);
       
       prismaInstance = new PrismaClient({ 
         adapter,
