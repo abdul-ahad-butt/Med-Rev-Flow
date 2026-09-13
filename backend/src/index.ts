@@ -40,6 +40,7 @@ if (config.nodeEnv !== 'test') {
   app.use('*', logger());
 }
 
+app.get('/favicon.ico', (c) => c.body(null, 204));
 app.get('/', (c) => c.json({ message: 'MedRevFlow API is running!' }));
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
