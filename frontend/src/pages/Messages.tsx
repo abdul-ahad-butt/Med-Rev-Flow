@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Send, User } from 'lucide-react'
+import { Search, Send, User, Mail } from 'lucide-react'
 import api from '../api/client'
 import { SkeletonLine } from '../components/ui/Skeleton'
 
