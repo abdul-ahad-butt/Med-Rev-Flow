@@ -40,6 +40,7 @@ if (config.nodeEnv !== 'test') {
   app.use('*', logger());
 }
 
+app.get('/', (c) => c.json({ message: 'MedRevFlow API is running!' }));
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 app.route('/api/auth', authRouter);
