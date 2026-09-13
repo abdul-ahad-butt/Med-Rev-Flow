@@ -22,6 +22,10 @@ export const errorHandler = (err: Error | AppError, c: Context) => {
 
   console.error('[ERROR]', err);
 
+  const origin = (c.env as any)?.FRONTEND_URL || 'https://med-rev-flow.pages.dev';
+  c.header('Access-Control-Allow-Origin', origin);
+  c.header('Access-Control-Allow-Credentials', 'true');
+
   return c.json({
     error: message,
     stack: err.stack,
