@@ -33,7 +33,7 @@ app.use('*', async (c, next) => {
 
 app.use('*', async (c, next) => {
   const corsMiddleware = cors({
-    origin: c.env?.FRONTEND_URL || 'https://med-rev-flow.pages.dev',
+    origin: (c.env as any)?.FRONTEND_URL || 'https://med-rev-flow.pages.dev',
     credentials: true,
   });
   return corsMiddleware(c, next);
