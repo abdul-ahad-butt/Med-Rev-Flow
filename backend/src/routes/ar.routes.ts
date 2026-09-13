@@ -4,5 +4,5 @@ import { authenticate } from '../middleware/auth';
 export const arRouter = new Hono();
 arRouter.use('*', authenticate);
 arRouter.get('/', getAR);
-arRouter.get('/stats', getARStats);
+arRouter.get('/summary', getARStats);
 arRouter.patch('/:id', updateAR);

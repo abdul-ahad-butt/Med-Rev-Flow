@@ -25,7 +25,7 @@ export function DenialsPage() {
     try {
       const [dataRes, statsRes] = await Promise.all([
         api.get('/denials', { params: { page, limit: 20, status, search } }),
-        page === 1 ? api.get('/denials/stats') : Promise.resolve(null),
+        page === 1 ? api.get('/denials/summary') : Promise.resolve(null),
       ])
       setData(dataRes.data)
       if (statsRes) setStats(statsRes.data)

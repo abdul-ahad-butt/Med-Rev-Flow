@@ -23,7 +23,7 @@ export function ARPage() {
     try {
       const [dataRes, statsRes] = await Promise.all([
         api.get('/ar', { params: { page, limit: 20, search } }),
-        page === 1 ? api.get('/ar/stats') : Promise.resolve(null),
+        page === 1 ? api.get('/ar/summary') : Promise.resolve(null),
       ])
       setData(dataRes.data)
       if (statsRes) setStats(statsRes.data)

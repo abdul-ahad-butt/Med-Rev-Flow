@@ -8,7 +8,7 @@ export const denialsRouter = new Hono();
 denialsRouter.use('*', authenticate);
 
 denialsRouter.get('/', getDenials);
-denialsRouter.get('/stats', getDenialStats);
+denialsRouter.get('/summary', getDenialStats);
 denialsRouter.get('/:id', getDenial);
 denialsRouter.patch('/:id', updateDenial);
 denialsRouter.post('/:id/notes', addDenialNote);
