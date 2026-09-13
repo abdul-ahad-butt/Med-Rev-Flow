@@ -1,9 +1,9 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { sign, verify } from 'hono/jwt';
 import { prisma } from '../config/prisma';
 import { config } from '../config/env';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { createAuditLog } from '../utils/helpers';
 import { z } from 'zod';
 
@@ -20,9 +20,9 @@ const registerSchema = z.object({
   practiceId: z.string().uuid().optional(),
 });
 
-export const login = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const login = async (c: Context) => {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { email, password } = loginSchema.parse((await c.req.json()));
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -30,12 +30,12 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return c.json({ error: 'Invalid credentials' }, 401);
     }
 
     const validPassword = await bcrypt.compare(password, user.passwordHash);
     if (!validPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return c.json({ error: 'Invalid credentials' }, 401);
     }
 
     // Update last login
@@ -44,10 +44,10 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
       data: { lastLoginAt: new Date() },
     });
 
-    const token = jwt.sign(
-      { userId: user.id, practiceId: user.practiceId, role: user.role, email: user.email },
+    const token = await sign({
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, userId: user.id, practiceId: user.practiceId, role: user.role, email: user.email },
       config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
+      'HS256'
     );
 
     await createAuditLog({
@@ -55,11 +55,11 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
       action: 'LOGIN',
       resourceType: 'User',
       resourceId: user.id,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'],
+      ipAddress: c.req.header('x-forwarded-for') || '127.0.0.1',
+      userAgent: c.req.header('user-agent'),
     });
 
-    res.json({
+    return c.json({
       token,
       user: {
         id: user.id,
@@ -72,19 +72,19 @@ export const login = async (req: AuthRequest, res: Response, next: NextFunction)
       },
     });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const register = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const register = async (c: Context) => {
   try {
-    const data = registerSchema.parse(req.body);
+    const data = registerSchema.parse((await c.req.json()));
 
     const existing = await prisma.user.findUnique({
       where: { email: data.email.toLowerCase() },
     });
     if (existing) {
-      return res.status(409).json({ error: 'Email already in use' });
+      return c.json({ error: 'Email already in use' }, 409);
     }
 
     // Get default practice (for demo, use first practice)
@@ -92,7 +92,7 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
     if (!practiceId) {
       const practice = await prisma.practice.findFirst();
       if (!practice) {
-        return res.status(400).json({ error: 'No practice found. Please seed the database.' });
+        return c.json({ error: 'No practice found. Please seed the database.' }, 400);
       }
       practiceId = practice.id;
     }
@@ -109,13 +109,13 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
       },
     });
 
-    const token = jwt.sign(
-      { userId: user.id, practiceId: user.practiceId, role: user.role, email: user.email },
+    const token = await sign({
+      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, userId: user.id, practiceId: user.practiceId, role: user.role, email: user.email },
       config.jwtSecret,
-      { expiresIn: config.jwtExpiresIn }
+      'HS256'
     );
 
-    res.status(201).json({
+    return c.json({
       token,
       user: {
         id: user.id,
@@ -127,16 +127,16 @@ export const register = async (req: AuthRequest, res: Response, next: NextFuncti
       },
     });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const me = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const me = async (c: Context) => {
   try {
-    if (!req.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!c.get('user')) return c.json({ error: 'Not authenticated' }, 401);
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
+      where: { id: c.get('user').userId },
       select: {
         id: true,
         email: true,
@@ -150,26 +150,26 @@ export const me = async (req: AuthRequest, res: Response, next: NextFunction) =>
       },
     });
 
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return c.json({ error: 'User not found' }, 404);
 
-    res.json({ user });
+    return c.json({ user });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const logout = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const logout = async (c: Context) => {
   try {
-    if (req.user) {
+    if (c.get('user')) {
       await createAuditLog({
-        userId: req.user.userId,
+        userId: c.get('user').userId,
         action: 'LOGOUT',
         resourceType: 'User',
-        resourceId: req.user.userId,
+        resourceId: c.get('user').userId,
       });
     }
-    res.json({ message: 'Logged out successfully' });
+    return c.json({ message: 'Logged out successfully' });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };

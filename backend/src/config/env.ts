@@ -1,6 +1,7 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
+// dotenv is not supported in Cloudflare Workers and env vars are passed via c.env
+if (typeof process === 'undefined') {
+  (globalThis as any).process = { env: {} };
+}
 export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3001', 10),

@@ -1,10 +1,10 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 
-export const getInsurances = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getInsurances = async (c: Context) => {
   try {
-    const { search = '' } = req.query as Record<string, string>;
+    const { search = '' } = c.req.query();
     const where: Record<string, unknown> = {};
     if (search) where.name = { contains: search, mode: 'insensitive' };
     const insurances = await prisma.insurance.findMany({ where, orderBy: { name: 'asc' } });
@@ -19,30 +19,30 @@ export const getInsurances = async (req: AuthRequest, res: Response, next: NextF
       ]);
       return { ...ins, claimsCount: claims, paidCount: paid, deniedCount: denied, pendingCount: pending, totalRevenue: Number(revenue._sum.amount || 0), denialRate: claims > 0 ? Math.round((denied / claims) * 1000) / 10 : 0 };
     }));
-    res.json({ data: withStats });
-  } catch (error) { next(error); }
+    return c.json({ data: withStats });
+  } catch (error) { throw error; }
 };
 
-export const getInsurance = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getInsurance = async (c: Context) => {
   try {
-    const ins = await prisma.insurance.findUnique({ where: { id: req.params.id } });
-    if (!ins) return res.status(404).json({ error: 'Insurance not found' });
-    res.json({ data: ins });
-  } catch (error) { next(error); }
+    const ins = await prisma.insurance.findUnique({ where: { id: c.req.param('id') } });
+    if (!ins) return c.json({ error: 'Insurance not found' }, 404);
+    return c.json({ data: ins });
+  } catch (error) { throw error; }
 };
 
-export const createInsurance = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createInsurance = async (c: Context) => {
   try {
-    const ins = await prisma.insurance.create({ data: req.body });
-    res.status(201).json({ data: ins });
-  } catch (error) { next(error); }
+    const ins = await prisma.insurance.create({ data: (await c.req.json()) });
+    return c.json({ data: ins }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updateInsurance = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateInsurance = async (c: Context) => {
   try {
-    const existing = await prisma.insurance.findUnique({ where: { id: req.params.id } });
-    if (!existing) return res.status(404).json({ error: 'Insurance not found' });
-    const ins = await prisma.insurance.update({ where: { id: req.params.id }, data: req.body });
-    res.json({ data: ins });
-  } catch (error) { next(error); }
+    const existing = await prisma.insurance.findUnique({ where: { id: c.req.param('id') } });
+    if (!existing) return c.json({ error: 'Insurance not found' }, 404);
+    const ins = await prisma.insurance.update({ where: { id: c.req.param('id') }, data: (await c.req.json()) });
+    return c.json({ data: ins });
+  } catch (error) { throw error; }
 };

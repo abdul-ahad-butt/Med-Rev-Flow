@@ -1,29 +1,29 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 
-export const getSEODashboard = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getSEODashboard = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const leadsBySource = await prisma.lead.groupBy({ by: ['source'], where: { practiceId }, _count: true, orderBy: { _count: { source: 'desc' } } });
-    res.json({ latestReport: null, leadsBySource, campaigns: [] });
-  } catch (error) { next(error); }
+    return c.json({ latestReport: null, leadsBySource, campaigns: [] });
+  } catch (error) { throw error; }
 };
 
-export const getKeywords = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getKeywords = async (c: Context) => {
   try {
-    res.json({ data: [] });
-  } catch (error) { next(error); }
+    return c.json({ data: [] });
+  } catch (error) { throw error; }
 };
 
-export const createKeyword = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createKeyword = async (c: Context) => {
   try {
-    res.status(201).json({ data: null });
-  } catch (error) { next(error); }
+    return c.json({ data: null }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updateKeyword = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateKeyword = async (c: Context) => {
   try {
-    res.json({ data: null });
-  } catch (error) { next(error); }
+    return c.json({ data: null });
+  } catch (error) { throw error; }
 };

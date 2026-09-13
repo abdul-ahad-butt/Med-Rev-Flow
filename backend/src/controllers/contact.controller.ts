@@ -1,14 +1,14 @@
-import { Response, NextFunction, Request } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { Context } from 'hono';
+import { AuthPayload } from '../middleware/auth';
 
-export const submitContact = async (req: Request, res: Response, next: NextFunction) => {
+export const submitContact = async (c: Context) => {
   try {
-    res.status(201).json({ message: 'Thank you! We will be in touch shortly.', id: 'temp-id' });
-  } catch (error) { next(error); }
+    return c.json({ message: 'Thank you! We will be in touch shortly.', id: 'temp-id' }, 201);
+  } catch (error) { throw error; }
 };
 
-export const getContacts = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getContacts = async (c: Context) => {
   try {
-    res.json({ data: [] });
-  } catch (error) { next(error); }
+    return c.json({ data: [] });
+  } catch (error) { throw error; }
 };

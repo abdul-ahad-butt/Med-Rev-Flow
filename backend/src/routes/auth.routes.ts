@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { login, register, me, logout } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
 
-export const authRouter = Router();
+export const authRouter = new Hono();
 
 authRouter.post('/login', login);
 authRouter.post('/register', register);

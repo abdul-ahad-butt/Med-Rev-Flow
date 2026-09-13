@@ -1,10 +1,10 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 
-export const getDashboard = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getDashboard = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const now = new Date();
     const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
@@ -89,8 +89,8 @@ export const getDashboard = async (req: AuthRequest, res: Response, next: NextFu
       prisma.task.findMany({
         where: { 
           OR: [
-            { assignedToId: req.user!.id },
-            { createdById: req.user!.id }
+            { assignedToId: c.get('user')!.id },
+            { createdById: c.get('user')!.id }
           ],
           status: { notIn: ['COMPLETED'] }
         },
@@ -159,7 +159,7 @@ export const getDashboard = async (req: AuthRequest, res: Response, next: NextFu
     });
     const denialRate = totalSubmitted > 0 ? (deniedClaimsCount / totalSubmitted) * 100 : 0;
 
-    res.json({
+    c.json({
       kpis: {
         totalRevenue: Number(totalRevenueResult._sum.amount || 0),
         monthlyRevenue: monthlyRevenue.length > 0 ? monthlyRevenue[monthlyRevenue.length - 1].revenue : 0,
@@ -192,7 +192,7 @@ export const getDashboard = async (req: AuthRequest, res: Response, next: NextFu
         count: a._count,
       })),
       denialsByReason: denialsByReason.map(d => ({
-        reason: d.denialReason,
+        reason: d.denialReason, denialDate: new Date(),
         count: d._count,
         amount: Number(d._sum.deniedAmount || 0),
       })),
@@ -200,12 +200,12 @@ export const getDashboard = async (req: AuthRequest, res: Response, next: NextFu
       tasks: openTasks
     });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
-export const getPriorityActions = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getPriorityActions = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const timingLimit = new Date(Date.now() - 270 * 24 * 60 * 60 * 1000); // 270 days ago
 
@@ -286,8 +286,8 @@ export const getPriorityActions = async (req: AuthRequest, res: Response, next: 
       });
     }
 
-    res.json({ actions });
+    return c.json({ actions });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };

@@ -1,12 +1,12 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getClaims, getClaim, createClaim, updateClaim, deleteClaim,
   updateClaimStatus, addClaimNote, exportClaims,
 } from '../controllers/claims.controller';
 import { authenticate } from '../middleware/auth';
 
-export const claimsRouter = Router();
-claimsRouter.use(authenticate);
+export const claimsRouter = new Hono();
+claimsRouter.use('*', authenticate);
 
 claimsRouter.get('/', getClaims);
 claimsRouter.post('/', createClaim);

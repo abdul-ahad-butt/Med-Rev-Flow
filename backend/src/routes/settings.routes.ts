@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getPracticeSettings, updatePracticeSettings, getUsers, updateUser, getLocations, createLocation } from '../controllers/settings.controller';
 import { authenticate, authorize } from '../middleware/auth';
-export const settingsRouter = Router();
-settingsRouter.use(authenticate);
+export const settingsRouter = new Hono();
+settingsRouter.use('*', authenticate);
 settingsRouter.get('/practice', getPracticeSettings);
 settingsRouter.patch('/practice', authorize('PRACTICE_OWNER', 'PRACTICE_MANAGER', 'SUPER_ADMIN'), updatePracticeSettings);
 settingsRouter.get('/users', getUsers);

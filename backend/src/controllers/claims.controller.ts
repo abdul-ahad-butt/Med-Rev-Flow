@@ -1,16 +1,16 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { paginate, paginatedResponse, createAuditLog } from '../utils/helpers';
-import { ClaimStatus } from '@prisma/client';
 
-export const getClaims = async (req: AuthRequest, res: Response, next: NextFunction) => {
+
+export const getClaims = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const {
       page = '1', limit = '20', search = '', status = '', providerId = '',
       insuranceId = '', dateFrom = '', dateTo = '', sortBy = 'createdAt', sortOrder = 'desc',
-    } = req.query as Record<string, string>;
+    } = c.req.query();
 
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
@@ -25,7 +25,7 @@ export const getClaims = async (req: AuthRequest, res: Response, next: NextFunct
         { patient: { lastName: { contains: search, mode: 'insensitive' } } },
       ];
     }
-    if (status) where.status = status as ClaimStatus;
+    if (status) where.status = status as string;
     if (providerId) where.providerId = providerId;
     if (insuranceId) where.insuranceId = insuranceId;
     if (dateFrom || dateTo) {
@@ -44,7 +44,7 @@ export const getClaims = async (req: AuthRequest, res: Response, next: NextFunct
         take,
         orderBy: { [orderByField]: sortOrder === 'asc' ? 'asc' : 'desc' },
         include: {
-          patient: { select: { id: true, firstName: true, lastName: true, patientNumber: true } },
+          patient: { select: { id: true, firstName: true, lastName: true,  } },
           provider: { select: { id: true, firstName: true, lastName: true } },
           insurance: { select: { id: true, name: true } },
         },
@@ -52,16 +52,16 @@ export const getClaims = async (req: AuthRequest, res: Response, next: NextFunct
       prisma.claim.count({ where }),
     ]);
 
-    res.json(paginatedResponse(claims, total, pageNum, limitNum));
+    return c.json(paginatedResponse(claims, total, pageNum, limitNum));
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const getClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getClaim = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const claim = await prisma.claim.findFirst({
       where: { id, provider: { practiceId } },
@@ -81,23 +81,23 @@ export const getClaim = async (req: AuthRequest, res: Response, next: NextFuncti
       },
     });
 
-    if (!claim) return res.status(404).json({ error: 'Claim not found' });
+    if (!claim) return c.json({ error: 'Claim not found' }, 404);
 
-    res.json({ data: claim });
+    return c.json({ data: claim });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const createClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createClaim = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
+    const { practiceId, userId } = c.get('user')!;
 
     const claimNumber = `CLM-${Date.now().toString().slice(-8)}`;
 
     const claim = await prisma.claim.create({
       data: {
-        ...req.body,
+        ...(await c.req.json()),
         claimNumber,
       },
     });
@@ -111,26 +111,26 @@ export const createClaim = async (req: AuthRequest, res: Response, next: NextFun
       action: 'CLAIM_CREATED',
       resourceType: 'Claim',
       resourceId: claim.id,
-      newValues: req.body,
+      newValues: (await c.req.json()),
     });
 
-    res.status(201).json({ data: claim });
+    return c.json({ data: claim }, 201);
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const updateClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateClaim = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { id } = req.params;
+    const { practiceId, userId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+    if (!existing) return c.json({ error: 'Claim not found' }, 404);
 
     const claim = await prisma.claim.update({
       where: { id },
-      data: req.body,
+      data: (await c.req.json()),
     });
 
     await createAuditLog({
@@ -139,25 +139,25 @@ export const updateClaim = async (req: AuthRequest, res: Response, next: NextFun
       resourceType: 'Claim',
       resourceId: claim.id,
       oldValues: existing,
-      newValues: req.body,
+      newValues: (await c.req.json()),
     });
 
-    res.json({ data: claim });
+    return c.json({ data: claim });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const deleteClaim = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const deleteClaim = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { id } = req.params;
+    const { practiceId, userId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+    if (!existing) return c.json({ error: 'Claim not found' }, 404);
 
     if (existing.status !== 'DRAFT') {
-      return res.status(400).json({ error: 'Only draft claims can be deleted' });
+      return c.json({ error: 'Only draft claims can be deleted' }, 400);
     }
 
     await prisma.claim.delete({ where: { id } });
@@ -169,20 +169,20 @@ export const deleteClaim = async (req: AuthRequest, res: Response, next: NextFun
       resourceId: id,
     });
 
-    res.json({ message: 'Claim deleted' });
+    return c.json({ message: 'Claim deleted' });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const updateClaimStatus = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateClaimStatus = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { id } = req.params;
-    const { status, notes } = req.body as { status: ClaimStatus; notes?: string };
+    const { practiceId, userId } = c.get('user')!;
+    const { id } = c.req.param();
+    const { status, notes } = (await c.req.json()) as { status: string; notes?: string };
 
     const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+    if (!existing) return c.json({ error: 'Claim not found' }, 404);
 
     const claim = await prisma.claim.update({
       where: { id },
@@ -201,6 +201,7 @@ export const updateClaimStatus = async (req: AuthRequest, res: Response, next: N
           denialReason: notes || 'Claim denied',
           deniedAmount: existing.billedAmount,
           status: 'NEW',
+          denialDate: new Date(),
           priority: 'HIGH',
         },
       });
@@ -230,39 +231,39 @@ export const updateClaimStatus = async (req: AuthRequest, res: Response, next: N
       newValues: { status },
     });
 
-    res.json({ data: claim });
+    return c.json({ data: claim });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const addClaimNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const addClaimNote = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
-    const { notes } = req.body;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
+    const {  notes  } = await c.req.json();
 
     const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Claim not found' });
+    if (!existing) return c.json({ error: 'Claim not found' }, 404);
 
     const claim = await prisma.claim.update({
       where: { id },
       data: { notes: existing.notes ? `${existing.notes}\n\n${notes}` : notes },
     });
 
-    res.json({ data: claim });
+    return c.json({ data: claim });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const exportClaims = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const exportClaims = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { status = '', dateFrom = '', dateTo = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { status = '', dateFrom = '', dateTo = '' } = c.req.query();
 
     const where: Record<string, unknown> = { provider: { practiceId } };
-    if (status) where.status = status as ClaimStatus;
+    if (status) where.status = status as string;
     if (dateFrom || dateTo) {
       where.dateOfService = {};
       if (dateFrom) (where.dateOfService as Record<string, Date>).gte = new Date(dateFrom);
@@ -286,7 +287,7 @@ export const exportClaims = async (req: AuthRequest, res: Response, next: NextFu
         `"${c.patient.lastName}, ${c.patient.firstName}"`,
         c.dateOfService.toISOString().split('T')[0],
         `"${c.provider.firstName} ${c.provider.lastName}"`,
-        `"${c.insurance.name}"`,
+        `"${c.insurance?.name || ''}"`,
         c.billedAmount,
         c.allowedAmount || '',
         c.paidAmount || '',
@@ -294,10 +295,10 @@ export const exportClaims = async (req: AuthRequest, res: Response, next: NextFu
       ].join(',')),
     ];
 
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="claims.csv"');
-    res.send(csvRows.join('\n'));
+    c.header('Content-Type', 'text/csv');
+    c.header('Content-Disposition', 'attachment; filename="claims.csv"');
+    return c.text(csvRows.join('\n'));
   } catch (error) {
-    next(error);
+    throw error;
   }
 };

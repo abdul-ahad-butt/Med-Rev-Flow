@@ -1,11 +1,11 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 
-export const getProviders = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getProviders = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { search = '', isActive = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { search = '', isActive = '' } = c.req.query();
     const where: Record<string, unknown> = { practiceId };
     if (isActive === 'true') where.isActive = true;
     if (isActive === 'false') where.isActive = false;
@@ -24,11 +24,7 @@ export const getProviders = async (req: AuthRequest, res: Response, next: NextFu
     });
     // Compute revenue per provider
     const providerIds = providers.map(p => p.id);
-    const revenues = await prisma.payment.groupBy({
-      by: [], // workaround: compute in JS
-      where: { claim: { providerId: { in: providerIds } } },
-    });
-    void revenues;
+    
     const providerRevenue = await Promise.all(
       providers.map(async (p) => {
         const rev = await prisma.payment.aggregate({ where: { claim: { providerId: p.id } }, _sum: { amount: true } });
@@ -37,40 +33,40 @@ export const getProviders = async (req: AuthRequest, res: Response, next: NextFu
         return { ...p, revenue: Number(rev._sum.amount || 0), denialRate: total > 0 ? Math.round((denied / total) * 1000) / 10 : 0 };
       })
     );
-    res.json({ data: providerRevenue });
-  } catch (error) { next(error); }
+    return c.json({ data: providerRevenue });
+  } catch (error) { throw error; }
 };
 
-export const getProvider = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getProvider = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const provider = await prisma.provider.findFirst({
-      where: { id: req.params.id, practiceId },
+      where: { id: c.req.param('id'), practiceId },
     });
-    if (!provider) return res.status(404).json({ error: 'Provider not found' });
+    if (!provider) return c.json({ error: 'Provider not found' }, 404);
     const [claimsCount, revenue, denials] = await Promise.all([
       prisma.claim.count({ where: { providerId: provider.id } }),
       prisma.payment.aggregate({ where: { claim: { providerId: provider.id } }, _sum: { amount: true } }),
       prisma.claim.count({ where: { providerId: provider.id, status: 'DENIED' } }),
     ]);
-    res.json({ data: { ...provider, claimsCount, revenue: Number(revenue._sum.amount || 0), denials } });
-  } catch (error) { next(error); }
+    return c.json({ data: { ...provider, claimsCount, revenue: Number(revenue._sum.amount || 0), denials } });
+  } catch (error) { throw error; }
 };
 
-export const createProvider = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createProvider = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const provider = await prisma.provider.create({ data: { ...req.body, practiceId } });
-    res.status(201).json({ data: provider });
-  } catch (error) { next(error); }
+    const { practiceId } = c.get('user')!;
+    const provider = await prisma.provider.create({ data: { ...(await c.req.json()), practiceId } });
+    return c.json({ data: provider }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updateProvider = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateProvider = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const existing = await prisma.provider.findFirst({ where: { id: req.params.id, practiceId } });
-    if (!existing) return res.status(404).json({ error: 'Provider not found' });
-    const provider = await prisma.provider.update({ where: { id: req.params.id }, data: req.body });
-    res.json({ data: provider });
-  } catch (error) { next(error); }
+    const { practiceId } = c.get('user')!;
+    const existing = await prisma.provider.findFirst({ where: { id: c.req.param('id'), practiceId } });
+    if (!existing) return c.json({ error: 'Provider not found' }, 404);
+    const provider = await prisma.provider.update({ where: { id: c.req.param('id') }, data: (await c.req.json()) });
+    return c.json({ data: provider });
+  } catch (error) { throw error; }
 };

@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getPriorAuths, getPriorAuth, createPriorAuth, updatePriorAuth, getPriorAuthStats } from '../controllers/priorAuth.controller';
 import { authenticate } from '../middleware/auth';
-export const priorAuthRouter = Router();
-priorAuthRouter.use(authenticate);
+export const priorAuthRouter = new Hono();
+priorAuthRouter.use('*', authenticate);
 priorAuthRouter.get('/', getPriorAuths);
 priorAuthRouter.get('/stats', getPriorAuthStats);
 priorAuthRouter.post('/', createPriorAuth);

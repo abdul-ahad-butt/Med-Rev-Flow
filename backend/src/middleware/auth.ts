@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import { Context, Next } from 'hono';
+import { verify } from 'hono/jwt';
 import { config } from '../config/env';
 import { prisma } from '../config/prisma';
-import { UserRole } from '@prisma/client';
+type UserRole = 'SUPER_ADMIN' | 'PRACTICE_OWNER' | 'PRACTICE_MANAGER' | 'BILLING_STAFF' | 'FRONT_DESK' | 'MARKETING_MANAGER' | 'VIEWER';
+import { User } from '@prisma/client';
 
 export interface AuthPayload {
   userId: string;
@@ -11,23 +12,18 @@ export interface AuthPayload {
   email: string;
 }
 
-export interface AuthRequest extends Request {
-  user?: AuthPayload;
-}
-
 export const authenticate = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
+  c: Context,
+  next: Next
 ) => {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = c.req.header('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return c.json({ error: 'Authentication required' }, 401);
     }
 
     const token = authHeader.substring(7);
-    const payload = jwt.verify(token, config.jwtSecret) as AuthPayload;
+    const payload = await verify(token, config.jwtSecret, 'HS256') as unknown as AuthPayload;
 
     // Verify user still exists and is active
     const user = await prisma.user.findUnique({
@@ -36,39 +32,41 @@ export const authenticate = async (
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ error: 'User not found or inactive' });
+      return c.json({ error: 'User not found or inactive' }, 401);
     }
 
-    req.user = {
+    c.set('user', {
       userId: user.id,
       practiceId: user.practiceId,
       role: user.role,
       email: user.email,
-    };
+    });
 
-    next();
+    await next();
   } catch {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return c.json({ error: 'Invalid or expired token' }, 401);
   }
 };
 
 export const authorize = (...roles: UserRole[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+  return async (c: Context, next: Next) => {
+    const user = c.get('user') as AuthPayload;
+    if (!user) {
+      return c.json({ error: 'Authentication required' }, 401);
     }
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+    if (!roles.includes(user.role)) {
+      return c.json({ error: 'Insufficient permissions' }, 403);
     }
-    next();
+    await next();
   };
 };
 
 // Role hierarchy — higher roles have access to lower role resources
 export const canAccess = (...allowedRoles: UserRole[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+  return async (c: Context, next: Next) => {
+    const user = c.get('user') as AuthPayload;
+    if (!user) {
+      return c.json({ error: 'Authentication required' }, 401);
     }
 
     const roleHierarchy: UserRole[] = [
@@ -81,16 +79,16 @@ export const canAccess = (...allowedRoles: UserRole[]) => {
       'VIEWER',
     ];
 
-    const userRoleIndex = roleHierarchy.indexOf(req.user.role);
+    const userRoleIndex = roleHierarchy.indexOf(user.role);
     const hasAccess = allowedRoles.some(role => {
       const allowedIndex = roleHierarchy.indexOf(role);
       return userRoleIndex <= allowedIndex;
     });
 
-    if (!hasAccess && !allowedRoles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
+    if (!hasAccess && !allowedRoles.includes(user.role)) {
+      return c.json({ error: 'Insufficient permissions' }, 403);
     }
 
-    next();
+    await next();
   };
 };

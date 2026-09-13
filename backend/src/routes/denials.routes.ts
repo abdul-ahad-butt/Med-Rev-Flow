@@ -1,11 +1,11 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import {
   getDenials, getDenial, updateDenial, addDenialNote, createAppeal, getDenialStats,
 } from '../controllers/denials.controller';
 import { authenticate } from '../middleware/auth';
 
-export const denialsRouter = Router();
-denialsRouter.use(authenticate);
+export const denialsRouter = new Hono();
+denialsRouter.use('*', authenticate);
 
 denialsRouter.get('/', getDenials);
 denialsRouter.get('/stats', getDenialStats);

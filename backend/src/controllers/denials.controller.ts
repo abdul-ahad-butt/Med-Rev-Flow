@@ -1,23 +1,23 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { paginate, paginatedResponse } from '../utils/helpers';
-import { DenialStatus } from '@prisma/client';
 
-export const getDenials = async (req: AuthRequest, res: Response, next: NextFunction) => {
+
+export const getDenials = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const {
       page = '1', limit = '20', search = '', status = '', assignedToId = '',
       sortBy = 'createdAt', sortOrder = 'desc',
-    } = req.query as Record<string, string>;
+    } = c.req.query();
 
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const { skip, take } = paginate(pageNum, limitNum);
 
     const where: Record<string, unknown> = { claim: { provider: { practiceId } } };
-    if (status) where.status = status as DenialStatus;
+    if (status) where.status = status as string;
     if (assignedToId) where.assignedToId = assignedToId;
     if (search) {
       where.OR = [
@@ -50,15 +50,15 @@ export const getDenials = async (req: AuthRequest, res: Response, next: NextFunc
       prisma.denial.count({ where }),
     ]);
 
-    res.json(paginatedResponse(denials, total, pageNum, limitNum));
+    return c.json(paginatedResponse(denials, total, pageNum, limitNum));
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const getDenialStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getDenialStats = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const where = { claim: { provider: { practiceId } } };
 
     const [totalAgg, byStatus, byReason] = await Promise.all([
@@ -87,7 +87,7 @@ export const getDenialStats = async (req: AuthRequest, res: Response, next: Next
     const totalRecovered = Number(totalAgg._sum.recoveredAmount || 0);
     const recoveryRate = totalDenied > 0 ? (totalRecovered / totalDenied) * 100 : 0;
 
-    res.json({
+    c.json({
       totalDenials: totalAgg._count,
       deniedAmount: totalDenied,
       recoveredAmount: totalRecovered,
@@ -97,14 +97,14 @@ export const getDenialStats = async (req: AuthRequest, res: Response, next: Next
       byReason,
     });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const getDenial = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getDenial = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const denial = await prisma.denial.findFirst({
       where: { id, claim: { provider: { practiceId } } },
@@ -126,77 +126,77 @@ export const getDenial = async (req: AuthRequest, res: Response, next: NextFunct
       },
     });
 
-    if (!denial) return res.status(404).json({ error: 'Denial not found' });
+    if (!denial) return c.json({ error: 'Denial not found' }, 404);
 
-    res.json({ data: denial });
+    return c.json({ data: denial });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const updateDenial = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateDenial = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const existing = await prisma.denial.findFirst({
       where: { id, claim: { provider: { practiceId } } },
     });
-    if (!existing) return res.status(404).json({ error: 'Denial not found' });
+    if (!existing) return c.json({ error: 'Denial not found' }, 404);
 
     const denial = await prisma.denial.update({
       where: { id },
-      data: req.body,
+      data: (await c.req.json()),
     });
 
     // If resolved, update recovered amount on claim
-    if (req.body.recoveredAmount !== undefined && req.body.recoveredAmount > 0) {
+    if ((await c.req.json()).recoveredAmount !== undefined && (await c.req.json()).recoveredAmount > 0) {
       await prisma.claim.update({
         where: { id: existing.claimId },
         data: {
           status: 'PAID',
-          paidAmount: req.body.recoveredAmount,
+          paidAmount: (await c.req.json()).recoveredAmount,
         },
       });
     }
 
-    res.json({ data: denial });
+    return c.json({ data: denial });
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const addDenialNote = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const addDenialNote = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { id } = req.params;
-    const { content } = req.body;
+    const { practiceId, userId } = c.get('user')!;
+    const { id } = c.req.param();
+    const {  content  } = await c.req.json();
 
     const denial = await prisma.denial.findFirst({ where: { id, claim: { provider: { practiceId } } } });
-    if (!denial) return res.status(404).json({ error: 'Denial not found' });
+    if (!denial) return c.json({ error: 'Denial not found' }, 404);
 
     const note = await prisma.note.create({
       data: { denialId: id, userId, content },
       include: { user: { select: { firstName: true, lastName: true } } },
     });
 
-    res.status(201).json({ data: note });
+    return c.json({ data: note }, 201);
   } catch (error) {
-    next(error);
+    throw error;
   }
 };
 
-export const createAppeal = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createAppeal = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
 
     const denial = await prisma.denial.findFirst({ where: { id, claim: { provider: { practiceId } } } });
-    if (!denial) return res.status(404).json({ error: 'Denial not found' });
+    if (!denial) return c.json({ error: 'Denial not found' }, 404);
 
     const [appeal] = await Promise.all([
       prisma.appeal.create({
-        data: { denialId: id, ...req.body },
+        data: { denialId: id, ...(await c.req.json()) },
       }),
       prisma.denial.update({
         where: { id },
@@ -208,8 +208,8 @@ export const createAppeal = async (req: AuthRequest, res: Response, next: NextFu
       }),
     ]);
 
-    res.status(201).json({ data: appeal });
+    return c.json({ data: appeal }, 201);
   } catch (error) {
-    next(error);
+    throw error;
   }
 };

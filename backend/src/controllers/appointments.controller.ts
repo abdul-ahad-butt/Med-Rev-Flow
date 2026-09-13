@@ -1,17 +1,17 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { paginate, paginatedResponse } from '../utils/helpers';
-import { AppointmentStatus } from '@prisma/client';
 
-export const getAppointments = async (req: AuthRequest, res: Response, next: NextFunction) => {
+
+export const getAppointments = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { page = '1', limit = '20', status = '', providerId = '', dateFrom = '', dateTo = '', search = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { page = '1', limit = '20', status = '', providerId = '', dateFrom = '', dateTo = '', search = '' } = c.req.query();
     const pageNum = parseInt(page), limitNum = parseInt(limit);
     const { skip, take } = paginate(pageNum, limitNum);
     const where: Record<string, unknown> = { provider: { practiceId } };
-    if (status) where.status = status as AppointmentStatus;
+    if (status) where.status = status as string;
     if (providerId) where.providerId = providerId;
     if (dateFrom || dateTo) {
       where.startTime = {};
@@ -35,13 +35,13 @@ export const getAppointments = async (req: AuthRequest, res: Response, next: Nex
       }),
       prisma.appointment.count({ where }),
     ]);
-    res.json(paginatedResponse(appointments, total, pageNum, limitNum));
-  } catch (error) { next(error); }
+    return c.json(paginatedResponse(appointments, total, pageNum, limitNum));
+  } catch (error) { throw error; }
 };
 
-export const getAppointmentStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAppointmentStats = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -53,38 +53,38 @@ export const getAppointmentStats = async (req: AuthRequest, res: Response, next:
     ]);
     const total = byStatus.reduce((sum, s) => sum + s._count, 0);
     const cancelled = byStatus.find(s => s.status === 'CANCELLED')?._count || 0;
-    res.json({ today: todayAppts, upcoming, noShows, cancellationRate: total > 0 ? Math.round((cancelled / total) * 1000) / 10 : 0, byStatus });
-  } catch (error) { next(error); }
+    return c.json({ today: todayAppts, upcoming, noShows, cancellationRate: total > 0 ? Math.round((cancelled / total) * 1000) / 10 : 0, byStatus });
+  } catch (error) { throw error; }
 };
 
-export const getAppointment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAppointment = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const appt = await prisma.appointment.findFirst({
-      where: { id: req.params.id, provider: { practiceId } },
+      where: { id: c.req.param('id'), provider: { practiceId } },
       include: { patient: true, provider: true },
     });
-    if (!appt) return res.status(404).json({ error: 'Appointment not found' });
-    res.json({ data: appt });
-  } catch (error) { next(error); }
+    if (!appt) return c.json({ error: 'Appointment not found' }, 404);
+    return c.json({ data: appt });
+  } catch (error) { throw error; }
 };
 
-export const createAppointment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createAppointment = async (c: Context) => {
   try {
-    const appt = await prisma.appointment.create({ data: { ...req.body } });
-    res.status(201).json({ data: appt });
-  } catch (error) { next(error); }
+    const appt = await prisma.appointment.create({ data: { ...(await c.req.json()) } });
+    return c.json({ data: appt }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updateAppointment = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateAppointment = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
     const existing = await prisma.appointment.findFirst({ where: { id, provider: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Appointment not found' });
-    const appt = await prisma.appointment.update({ where: { id }, data: req.body });
+    if (!existing) return c.json({ error: 'Appointment not found' }, 404);
+    const appt = await prisma.appointment.update({ where: { id }, data: (await c.req.json()) });
     // Auto-create task if NO_SHOW
-    if (req.body.status === 'NO_SHOW' && existing.status !== 'NO_SHOW') {
+    if ((await c.req.json()).status === 'NO_SHOW' && existing.status !== 'NO_SHOW') {
       const creator = await prisma.user.findFirst({ where: { practiceId, role: { in: ['FRONT_DESK', 'PRACTICE_MANAGER', 'PRACTICE_OWNER', 'ADMIN'] } } });
       if (creator) {
         await prisma.task.create({
@@ -97,6 +97,6 @@ export const updateAppointment = async (req: AuthRequest, res: Response, next: N
         });
       }
     }
-    res.json({ data: appt });
-  } catch (error) { next(error); }
+    return c.json({ data: appt });
+  } catch (error) { throw error; }
 };

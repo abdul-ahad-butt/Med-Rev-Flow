@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Context } from 'hono';
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -12,22 +12,17 @@ export const createError = (message: string, statusCode: number): AppError => {
   return error;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const errorHandler = (
-  err: AppError,
-  _req: Request,
-  res: Response,
-  _next: NextFunction
-) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.isOperational ? err.message : 'Internal server error';
+export const errorHandler = (err: Error | AppError, c: Context) => {
+  const appError = err as AppError;
+  const statusCode = appError.statusCode || 500;
+  const message = appError.isOperational ? appError.message : 'Internal server error';
 
   if (process.env.NODE_ENV === 'development') {
     console.error('[ERROR]', err);
   }
 
-  res.status(statusCode).json({
+  return c.json({
     error: message,
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
-  });
+  }, statusCode as any);
 };

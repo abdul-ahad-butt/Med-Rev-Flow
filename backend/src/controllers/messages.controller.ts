@@ -1,26 +1,26 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { Context } from 'hono';
+import { AuthPayload } from '../middleware/auth';
 
-export const getConversations = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getConversations = async (c: Context) => {
   try {
-    res.json({ data: [] });
-  } catch (error) { next(error); }
+    return c.json({ data: [] });
+  } catch (error) { throw error; }
 };
 
-export const createConversation = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createConversation = async (c: Context) => {
   try {
-    res.status(201).json({ data: { id: 'temp-conv-id', name: req.body.name, members: [] } });
-  } catch (error) { next(error); }
+    return c.json({ data: { id: 'temp-conv-id', name: (await c.req.json()).name, members: [] } }, 201);
+  } catch (error) { throw error; }
 };
 
-export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getMessages = async (c: Context) => {
   try {
-    res.json({ data: [] });
-  } catch (error) { next(error); }
+    return c.json({ data: [] });
+  } catch (error) { throw error; }
 };
 
-export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const sendMessage = async (c: Context) => {
   try {
-    res.status(201).json({ data: { id: 'temp-msg-id', content: req.body.content } });
-  } catch (error) { next(error); }
+    return c.json({ data: { id: 'temp-msg-id', content: (await c.req.json()).content } }, 201);
+  } catch (error) { throw error; }
 };

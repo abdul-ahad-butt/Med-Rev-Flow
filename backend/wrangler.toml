@@ -1,0 +1,7 @@
+name = "med-rev-flow"
+compatibility_date = "2024-05-29"
+compatibility_flags = [ "nodejs_compat" ]
+main = "src/index.ts"
+
+[vars]
+# Add any environment variables here

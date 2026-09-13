@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getRevenueCycle, getClaimsReport, getDenialReport, getARReport, getProviderReport, getInsuranceReport, getPatientAcquisitionReport } from '../controllers/reports.controller';
 import { authenticate } from '../middleware/auth';
-export const reportsRouter = Router();
-reportsRouter.use(authenticate);
+export const reportsRouter = new Hono();
+reportsRouter.use('*', authenticate);
 reportsRouter.get('/revenue-cycle', getRevenueCycle);
 reportsRouter.get('/claims', getClaimsReport);
 reportsRouter.get('/denials', getDenialReport);

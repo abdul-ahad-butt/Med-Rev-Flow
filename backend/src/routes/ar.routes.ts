@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getAR, getARStats, updateAR } from '../controllers/ar.controller';
 import { authenticate } from '../middleware/auth';
-export const arRouter = Router();
-arRouter.use(authenticate);
+export const arRouter = new Hono();
+arRouter.use('*', authenticate);
 arRouter.get('/', getAR);
 arRouter.get('/stats', getARStats);
 arRouter.patch('/:id', updateAR);

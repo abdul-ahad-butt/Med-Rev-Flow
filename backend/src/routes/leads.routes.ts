@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getLeads, getLead, createLead, updateLead, addLeadActivity, getLeadStats } from '../controllers/leads.controller';
 import { authenticate } from '../middleware/auth';
-export const leadsRouter = Router();
-leadsRouter.use(authenticate);
+export const leadsRouter = new Hono();
+leadsRouter.use('*', authenticate);
 leadsRouter.get('/', getLeads);
 leadsRouter.get('/stats', getLeadStats);
 leadsRouter.post('/', createLead);

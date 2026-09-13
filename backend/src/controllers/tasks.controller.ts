@@ -1,12 +1,12 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { paginate, paginatedResponse } from '../utils/helpers';
 
-export const getTasks = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getTasks = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { page = '1', limit = '50', status = '', priority = '', assignedToMe = '' } = req.query as Record<string, string>;
+    const { practiceId, userId } = c.get('user')!;
+    const { page = '1', limit = '50', status = '', priority = '', assignedToMe = '' } = c.req.query();
     const pageNum = parseInt(page), limitNum = parseInt(limit);
     const { skip, take } = paginate(pageNum, limitNum);
     const where: Record<string, unknown> = { createdBy: { practiceId } };
@@ -24,15 +24,15 @@ export const getTasks = async (req: AuthRequest, res: Response, next: NextFuncti
       }),
       prisma.task.count({ where }),
     ]);
-    res.json(paginatedResponse(tasks, total, pageNum, limitNum));
-  } catch (error) { next(error); }
+    return c.json(paginatedResponse(tasks, total, pageNum, limitNum));
+  } catch (error) { throw error; }
 };
 
-export const createTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createTask = async (c: Context) => {
   try {
-    const { userId } = req.user!;
+    const { userId } = c.get('user')!;
     const task = await prisma.task.create({
-      data: { ...req.body, createdById: userId },
+      data: { ...(await c.req.json()), createdById: userId },
       include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } },
     });
     // Notify assignee
@@ -41,27 +41,27 @@ export const createTask = async (req: AuthRequest, res: Response, next: NextFunc
         data: { userId: task.assignedToId, type: 'TASK', title: 'Task Assigned', message: `You have been assigned a task: ${task.title}` },
       });
     }
-    res.status(201).json({ data: task });
-  } catch (error) { next(error); }
+    return c.json({ data: task }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updateTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateTask = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const existing = await prisma.task.findFirst({ where: { id: req.params.id, createdBy: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Task not found' });
-    const data = { ...req.body };
-    const task = await prisma.task.update({ where: { id: req.params.id }, data, include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } } });
-    res.json({ data: task });
-  } catch (error) { next(error); }
+    const { practiceId } = c.get('user')!;
+    const existing = await prisma.task.findFirst({ where: { id: c.req.param('id'), createdBy: { practiceId } } });
+    if (!existing) return c.json({ error: 'Task not found' }, 404);
+    const data = { ...(await c.req.json()) };
+    const task = await prisma.task.update({ where: { id: c.req.param('id') }, data, include: { assignedTo: { select: { id: true, firstName: true, lastName: true } } } });
+    return c.json({ data: task });
+  } catch (error) { throw error; }
 };
 
-export const deleteTask = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const deleteTask = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const existing = await prisma.task.findFirst({ where: { id: req.params.id, createdBy: { practiceId } } });
-    if (!existing) return res.status(404).json({ error: 'Task not found' });
-    await prisma.task.delete({ where: { id: req.params.id } });
-    res.json({ message: 'Task deleted' });
-  } catch (error) { next(error); }
+    const { practiceId } = c.get('user')!;
+    const existing = await prisma.task.findFirst({ where: { id: c.req.param('id'), createdBy: { practiceId } } });
+    if (!existing) return c.json({ error: 'Task not found' }, 404);
+    await prisma.task.delete({ where: { id: c.req.param('id') } });
+    return c.json({ message: 'Task deleted' });
+  } catch (error) { throw error; }
 };

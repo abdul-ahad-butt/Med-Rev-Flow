@@ -1,18 +1,18 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { Context } from 'hono';
+import { AuthPayload } from '../middleware/auth';
 import { paginatedResponse } from '../utils/helpers';
 
-export const getAR = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAR = async (c: Context) => {
   try {
-    const { page = '1', limit = '20' } = req.query as Record<string, string>;
+    const { page = '1', limit = '20' } = c.req.query();
     const pageNum = parseInt(page), limitNum = parseInt(limit);
-    res.json(paginatedResponse([], 0, pageNum, limitNum));
-  } catch (error) { next(error); }
+    return c.json(paginatedResponse([], 0, pageNum, limitNum));
+  } catch (error) { throw error; }
 };
 
-export const getARStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getARStats = async (c: Context) => {
   try {
-    res.json({
+    c.json({
       totalAR: 0,
       totalBilled: 0,
       byBucket: [
@@ -24,11 +24,11 @@ export const getARStats = async (req: AuthRequest, res: Response, next: NextFunc
       ],
       collectionRate: 0,
     });
-  } catch (error) { next(error); }
+  } catch (error) { throw error; }
 };
 
-export const updateAR = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updateAR = async (c: Context) => {
   try {
-    res.status(404).json({ error: 'A/R record not found' });
-  } catch (error) { next(error); }
+    return c.json({ error: 'A/R record not found' }, 404);
+  } catch (error) { throw error; }
 };

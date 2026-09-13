@@ -1,6 +1,6 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 
 const getDateFilter = (dateFrom: string, dateTo: string) => {
   if (!dateFrom && !dateTo) return undefined;
@@ -10,10 +10,10 @@ const getDateFilter = (dateFrom: string, dateTo: string) => {
   return filter;
 };
 
-export const getRevenueCycle = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getRevenueCycle = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { dateFrom = '', dateTo = '', providerId = '', insuranceId = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { dateFrom = '', dateTo = '', providerId = '', insuranceId = '' } = c.req.query();
     const claimWhere: Record<string, unknown> = { provider: { practiceId } };
     if (providerId) claimWhere.providerId = providerId;
     if (insuranceId) claimWhere.insuranceId = insuranceId;
@@ -34,7 +34,7 @@ export const getRevenueCycle = async (req: AuthRequest, res: Response, next: Nex
     const adjustments = 0; // adjustmentAmount not in Claim model
     const outstandingAR = grossCharges - payments - adjustments;
 
-    res.json({
+    c.json({
       grossCharges,
       payments,
       adjustments,
@@ -48,13 +48,13 @@ export const getRevenueCycle = async (req: AuthRequest, res: Response, next: Nex
         paid: paidCount,
       },
     });
-  } catch (error) { next(error); }
+  } catch (error) { throw error; }
 };
 
-export const getClaimsReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getClaimsReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { dateFrom = '', dateTo = '', providerId = '', insuranceId = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { dateFrom = '', dateTo = '', providerId = '', insuranceId = '' } = c.req.query();
     const where: Record<string, unknown> = { provider: { practiceId } };
     if (providerId) where.providerId = providerId;
     if (insuranceId) where.insuranceId = insuranceId;
@@ -74,25 +74,25 @@ export const getClaimsReport = async (req: AuthRequest, res: Response, next: Nex
     }
     const monthly = Object.keys(monthlyMap).sort().map(m => ({ month: m, ...monthlyMap[m] }));
     
-    res.json({ byStatus, monthly });
-  } catch (error) { next(error); }
+    return c.json({ byStatus, monthly });
+  } catch (error) { throw error; }
 };
 
-export const getDenialReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getDenialReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const [byReason, byStatus, trend] = await Promise.all([
       prisma.denial.groupBy({ by: ['denialReason'], where: { claim: { provider: { practiceId } } }, _count: true, _sum: { deniedAmount: true, recoveredAmount: true }, orderBy: { _count: { denialReason: 'desc' } }, take: 10 }),
       prisma.denial.groupBy({ by: ['status'], where: { claim: { provider: { practiceId } } }, _count: true, _sum: { deniedAmount: true } }),
       prisma.denial.aggregate({ where: { claim: { provider: { practiceId } } }, _sum: { deniedAmount: true, recoveredAmount: true }, _count: true }),
     ]);
-    res.json({ byReason, byStatus, summary: { total: trend._count, totalDenied: Number(trend._sum.deniedAmount || 0), totalRecovered: Number(trend._sum.recoveredAmount || 0) } });
-  } catch (error) { next(error); }
+    return c.json({ byReason, byStatus, summary: { total: trend._count, totalDenied: Number(trend._sum.deniedAmount || 0), totalRecovered: Number(trend._sum.recoveredAmount || 0) } });
+  } catch (error) { throw error; }
 };
 
-export const getARReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getARReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     // AccountReceivable model does not exist. We compute from claims with patientBalance.
     const unpaidClaims = await prisma.claim.findMany({ 
       where: { provider: { practiceId }, patientBalance: { gt: 0 } },
@@ -111,13 +111,13 @@ export const getARReport = async (req: AuthRequest, res: Response, next: NextFun
       else bucketMap['90+'] += balance;
     }
     const byBucket = Object.keys(bucketMap).map(k => ({ agingBucket: k, _sum: { balance: bucketMap[k as keyof typeof bucketMap] } }));
-    res.json({ byBucket, totalOutstanding });
-  } catch (error) { next(error); }
+    return c.json({ byBucket, totalOutstanding });
+  } catch (error) { throw error; }
 };
 
-export const getProviderReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getProviderReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const providers = await prisma.provider.findMany({ where: { practiceId, isActive: true } });
     const withStats = await Promise.all(providers.map(async (p) => {
       const [claims, revenue, denials, appts] = await Promise.all([
@@ -128,13 +128,13 @@ export const getProviderReport = async (req: AuthRequest, res: Response, next: N
       ]);
       return { ...p, claims, revenue: Number(revenue._sum.amount || 0), denials, appointments: appts, denialRate: claims > 0 ? Math.round((denials / claims) * 1000) / 10 : 0 };
     }));
-    res.json({ data: withStats });
-  } catch (error) { next(error); }
+    return c.json({ data: withStats });
+  } catch (error) { throw error; }
 };
 
-export const getInsuranceReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getInsuranceReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const insurances = await prisma.insurance.findMany({ where: { claims: { some: { provider: { practiceId } } } } });
     const withStats = await Promise.all(insurances.map(async (ins) => {
       const [claims, paid, denied, revenue] = await Promise.all([
@@ -145,13 +145,13 @@ export const getInsuranceReport = async (req: AuthRequest, res: Response, next: 
       ]);
       return { ...ins, claims, paid, denied, revenue: Number(revenue._sum.amount || 0), denialRate: claims > 0 ? Math.round((denied / claims) * 1000) / 10 : 0 };
     }));
-    res.json({ data: withStats });
-  } catch (error) { next(error); }
+    return c.json({ data: withStats });
+  } catch (error) { throw error; }
 };
 
-export const getPatientAcquisitionReport = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getPatientAcquisitionReport = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
+    const { practiceId } = c.get('user')!;
     const [bySource, byStatus] = await Promise.all([
       prisma.lead.groupBy({ by: ['source'], where: { practiceId }, _count: true }),
       prisma.lead.groupBy({ by: ['status'], where: { practiceId }, _count: true }),
@@ -165,6 +165,6 @@ export const getPatientAcquisitionReport = async (req: AuthRequest, res: Respons
     const monthly = Object.keys(monthlyMap).sort().slice(-12).map(m => ({ month: m, count: monthlyMap[m] }));
     const total = byStatus.reduce((s, b) => s + b._count, 0);
     const converted = byStatus.find(s => s.status === 'CONVERTED')?._count || 0;
-    res.json({ bySource, byStatus, monthly, conversionRate: total > 0 ? Math.round((converted / total) * 1000) / 10 : 0 });
-  } catch (error) { next(error); }
+    return c.json({ bySource, byStatus, monthly, conversionRate: total > 0 ? Math.round((converted / total) * 1000) / 10 : 0 });
+  } catch (error) { throw error; }
 };

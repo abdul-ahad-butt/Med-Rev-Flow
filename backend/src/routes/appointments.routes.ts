@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Hono } from 'hono';
 import { getAppointments, getAppointment, createAppointment, updateAppointment, getAppointmentStats } from '../controllers/appointments.controller';
 import { authenticate } from '../middleware/auth';
-export const appointmentsRouter = Router();
-appointmentsRouter.use(authenticate);
+export const appointmentsRouter = new Hono();
+appointmentsRouter.use('*', authenticate);
 appointmentsRouter.get('/', getAppointments);
 appointmentsRouter.get('/stats', getAppointmentStats);
 appointmentsRouter.post('/', createAppointment);

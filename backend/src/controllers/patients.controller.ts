@@ -1,12 +1,12 @@
-import { Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { prisma } from '../config/prisma';
-import { AuthRequest } from '../middleware/auth';
+import { AuthPayload } from '../middleware/auth';
 import { paginate, paginatedResponse, createAuditLog } from '../utils/helpers';
 
-export const getPatients = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getPatients = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { page = '1', limit = '20', search = '' } = req.query as Record<string, string>;
+    const { practiceId } = c.get('user')!;
+    const { page = '1', limit = '20', search = '' } = c.req.query();
     const pageNum = parseInt(page), limitNum = parseInt(limit);
     const { skip, take } = paginate(pageNum, limitNum);
     const where: Record<string, unknown> = { practiceId };
@@ -29,14 +29,14 @@ export const getPatients = async (req: AuthRequest, res: Response, next: NextFun
       }),
       prisma.patient.count({ where }),
     ]);
-    res.json(paginatedResponse(patients, total, pageNum, limitNum));
-  } catch (error) { next(error); }
+    return c.json(paginatedResponse(patients, total, pageNum, limitNum));
+  } catch (error) { throw error; }
 };
 
-export const getPatient = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getPatient = async (c: Context) => {
   try {
-    const { practiceId } = req.user!;
-    const { id } = req.params;
+    const { practiceId } = c.get('user')!;
+    const { id } = c.req.param();
     const patient = await prisma.patient.findFirst({
       where: { id, practiceId },
       include: {
@@ -44,28 +44,28 @@ export const getPatient = async (req: AuthRequest, res: Response, next: NextFunc
         claims: { orderBy: { dateOfService: 'desc' }, take: 10, include: { insurance: { select: { name: true } } } },
       },
     });
-    if (!patient) return res.status(404).json({ error: 'Patient not found' });
-    res.json({ data: patient });
-  } catch (error) { next(error); }
+    if (!patient) return c.json({ error: 'Patient not found' }, 404);
+    return c.json({ data: patient });
+  } catch (error) { throw error; }
 };
 
-export const createPatient = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const createPatient = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const patient = await prisma.patient.create({ data: { ...req.body, practiceId } });
+    const { practiceId, userId } = c.get('user')!;
+    const patient = await prisma.patient.create({ data: { ...(await c.req.json()), practiceId } });
     await createAuditLog({ userId, action: 'PATIENT_CREATED', resourceType: 'Patient', resourceId: patient.id });
-    res.status(201).json({ data: patient });
-  } catch (error) { next(error); }
+    return c.json({ data: patient }, 201);
+  } catch (error) { throw error; }
 };
 
-export const updatePatient = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const updatePatient = async (c: Context) => {
   try {
-    const { practiceId, userId } = req.user!;
-    const { id } = req.params;
+    const { practiceId, userId } = c.get('user')!;
+    const { id } = c.req.param();
     const existing = await prisma.patient.findFirst({ where: { id, practiceId } });
-    if (!existing) return res.status(404).json({ error: 'Patient not found' });
-    const patient = await prisma.patient.update({ where: { id }, data: req.body });
-    await createAuditLog({ userId, action: 'PATIENT_UPDATED', resourceType: 'Patient', resourceId: id, oldValues: existing, newValues: req.body });
-    res.json({ data: patient });
-  } catch (error) { next(error); }
+    if (!existing) return c.json({ error: 'Patient not found' }, 404);
+    const patient = await prisma.patient.update({ where: { id }, data: (await c.req.json()) });
+    await createAuditLog({ userId, action: 'PATIENT_UPDATED', resourceType: 'Patient', resourceId: id, oldValues: existing, newValues: (await c.req.json()) });
+    return c.json({ data: patient });
+  } catch (error) { throw error; }
 };
