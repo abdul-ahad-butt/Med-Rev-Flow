@@ -12,3 +12,6 @@ export const config = {
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
   databaseUrl: process.env.DATABASE_URL || '',
 };
+export * from './demo-accounts';
+  
+ 
