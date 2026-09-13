@@ -92,12 +92,13 @@ export const getClaim = async (c: Context) => {
 export const createClaim = async (c: Context) => {
   try {
     const { practiceId, userId } = c.get('user')!;
+    const body = await c.req.json();
 
     const claimNumber = `CLM-${Date.now().toString().slice(-8)}`;
 
     const claim = await prisma.claim.create({
       data: {
-        ...(await c.req.json()),
+        ...body,
         claimNumber,
       },
     });
@@ -111,7 +112,7 @@ export const createClaim = async (c: Context) => {
       action: 'CLAIM_CREATED',
       resourceType: 'Claim',
       resourceId: claim.id,
-      newValues: (await c.req.json()),
+      newValues: body,
     });
 
     return c.json({ data: claim }, 201);
@@ -124,13 +125,14 @@ export const updateClaim = async (c: Context) => {
   try {
     const { practiceId, userId } = c.get('user')!;
     const { id } = c.req.param();
+    const body = await c.req.json();
 
     const existing = await prisma.claim.findFirst({ where: { id, provider: { practiceId } } });
     if (!existing) return c.json({ error: 'Claim not found' }, 404);
 
     const claim = await prisma.claim.update({
       where: { id },
-      data: (await c.req.json()),
+      data: body,
     });
 
     await createAuditLog({
@@ -139,7 +141,7 @@ export const updateClaim = async (c: Context) => {
       resourceType: 'Claim',
       resourceId: claim.id,
       oldValues: existing,
-      newValues: (await c.req.json()),
+      newValues: body,
     });
 
     return c.json({ data: claim });

@@ -62,10 +62,11 @@ export const updatePatient = async (c: Context) => {
   try {
     const { practiceId, userId } = c.get('user')!;
     const { id } = c.req.param();
+    const body = await c.req.json();
     const existing = await prisma.patient.findFirst({ where: { id, practiceId } });
     if (!existing) return c.json({ error: 'Patient not found' }, 404);
-    const patient = await prisma.patient.update({ where: { id }, data: (await c.req.json()) });
-    await createAuditLog({ userId, action: 'PATIENT_UPDATED', resourceType: 'Patient', resourceId: id, oldValues: existing, newValues: (await c.req.json()) });
+    const patient = await prisma.patient.update({ where: { id }, data: body });
+    await createAuditLog({ userId, action: 'PATIENT_UPDATED', resourceType: 'Patient', resourceId: id, oldValues: existing, newValues: body });
     return c.json({ data: patient });
   } catch (error) { throw error; }
 };

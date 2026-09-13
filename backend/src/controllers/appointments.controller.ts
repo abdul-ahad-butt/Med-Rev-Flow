@@ -80,11 +80,12 @@ export const updateAppointment = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
     const { id } = c.req.param();
+    const body = await c.req.json();
     const existing = await prisma.appointment.findFirst({ where: { id, provider: { practiceId } } });
     if (!existing) return c.json({ error: 'Appointment not found' }, 404);
-    const appt = await prisma.appointment.update({ where: { id }, data: (await c.req.json()) });
+    const appt = await prisma.appointment.update({ where: { id }, data: body });
     // Auto-create task if NO_SHOW
-    if ((await c.req.json()).status === 'NO_SHOW' && existing.status !== 'NO_SHOW') {
+    if (body.status === 'NO_SHOW' && existing.status !== 'NO_SHOW') {
       const creator = await prisma.user.findFirst({ where: { practiceId, role: { in: ['FRONT_DESK', 'PRACTICE_MANAGER', 'PRACTICE_OWNER', 'ADMIN'] } } });
       if (creator) {
         await prisma.task.create({

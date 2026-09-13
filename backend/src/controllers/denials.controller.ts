@@ -28,27 +28,26 @@ export const getDenials = async (c: Context) => {
       ];
     }
 
-    const [denials, total] = await Promise.all([
-      prisma.denial.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { [sortBy === 'createdAt' ? 'createdAt' : 'updatedAt']: sortOrder === 'asc' ? 'asc' : 'desc' },
-        include: {
-          claim: {
-            select: {
-              claimNumber: true,
-              dateOfService: true,
-              patient: { select: { firstName: true, lastName: true } },
-              insurance: { select: { name: true } },
-            },
+    const denials = await prisma.denial.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { [sortBy === 'createdAt' ? 'createdAt' : 'updatedAt']: sortOrder === 'asc' ? 'asc' : 'desc' },
+      include: {
+        claim: {
+          select: {
+            claimNumber: true,
+            dateOfService: true,
+            patient: { select: { firstName: true, lastName: true } },
+            insurance: { select: { name: true } },
           },
-          assignedTo: { select: { id: true, firstName: true, lastName: true } },
-          _count: { select: { notes: true, appeals: true } },
         },
-      }),
-      prisma.denial.count({ where }),
-    ]);
+        assignedTo: { select: { id: true, firstName: true, lastName: true } },
+        _count: { select: { notes: true, appeals: true } },
+      },
+    });
+    
+    const total = await prisma.denial.count({ where });
 
     return c.json(paginatedResponse(denials, total, pageNum, limitNum));
   } catch (error) {
@@ -61,27 +60,27 @@ export const getDenialStats = async (c: Context) => {
     const { practiceId } = c.get('user')!;
     const where = { claim: { provider: { practiceId } } };
 
-    const [totalAgg, byStatus, byReason] = await Promise.all([
-      prisma.denial.aggregate({
-        where,
-        _sum: { deniedAmount: true, recoveredAmount: true },
-        _count: true,
-      }),
-      prisma.denial.groupBy({
-        by: ['status'],
-        where,
-        _count: true,
-        _sum: { deniedAmount: true, recoveredAmount: true },
-      }),
-      prisma.denial.groupBy({
-        by: ['denialReason'],
-        where,
-        _count: true,
-        _sum: { deniedAmount: true },
-        orderBy: { _count: { denialReason: 'desc' } },
-        take: 10,
-      }),
-    ]);
+    const totalAgg = await prisma.denial.aggregate({
+      where,
+      _sum: { deniedAmount: true, recoveredAmount: true },
+      _count: true,
+    });
+    
+    const byStatus = await prisma.denial.groupBy({
+      by: ['status'],
+      where,
+      _count: true,
+      _sum: { deniedAmount: true, recoveredAmount: true },
+    });
+    
+    const byReason = await prisma.denial.groupBy({
+      by: ['denialReason'],
+      where,
+      _count: true,
+      _sum: { deniedAmount: true },
+      orderBy: { _count: { denialReason: 'desc' } },
+      take: 10,
+    });
 
     const totalDenied = Number(totalAgg._sum.deniedAmount || 0);
     const totalRecovered = Number(totalAgg._sum.recoveredAmount || 0);
@@ -138,6 +137,7 @@ export const updateDenial = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
     const { id } = c.req.param();
+    const body = await c.req.json();
 
     const existing = await prisma.denial.findFirst({
       where: { id, claim: { provider: { practiceId } } },
@@ -146,16 +146,16 @@ export const updateDenial = async (c: Context) => {
 
     const denial = await prisma.denial.update({
       where: { id },
-      data: (await c.req.json()),
+      data: body,
     });
 
     // If resolved, update recovered amount on claim
-    if ((await c.req.json()).recoveredAmount !== undefined && (await c.req.json()).recoveredAmount > 0) {
+    if (body.recoveredAmount !== undefined && body.recoveredAmount > 0) {
       await prisma.claim.update({
         where: { id: existing.claimId },
         data: {
           status: 'PAID',
-          paidAmount: (await c.req.json()).recoveredAmount,
+          paidAmount: body.recoveredAmount,
         },
       });
     }
@@ -190,23 +190,24 @@ export const createAppeal = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
     const { id } = c.req.param();
+    const body = await c.req.json();
 
     const denial = await prisma.denial.findFirst({ where: { id, claim: { provider: { practiceId } } } });
     if (!denial) return c.json({ error: 'Denial not found' }, 404);
 
-    const [appeal] = await Promise.all([
-      prisma.appeal.create({
-        data: { denialId: id, ...(await c.req.json()) },
-      }),
-      prisma.denial.update({
-        where: { id },
-        data: { status: 'APPEAL_SUBMITTED' },
-      }),
-      prisma.claim.update({
-        where: { id: denial.claimId },
-        data: { status: 'APPEALED' },
-      }),
-    ]);
+    const appeal = await prisma.appeal.create({
+      data: { denialId: id, ...body },
+    });
+    
+    await prisma.denial.update({
+      where: { id },
+      data: { status: 'APPEAL_SUBMITTED' },
+    });
+    
+    await prisma.claim.update({
+      where: { id: denial.claimId },
+      data: { status: 'APPEALED' },
+    });
 
     return c.json({ data: appeal }, 201);
   } catch (error) {
