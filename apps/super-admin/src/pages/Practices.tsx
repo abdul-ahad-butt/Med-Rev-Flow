@@ -3,8 +3,9 @@ import { Building2, Plus, Search, MoreVertical } from 'lucide-react';
 import api from '../api/client';
 import toast from 'react-hot-toast';
 import { OnboardPracticeModal } from '../components/OnboardPracticeModal';
+import { PracticeUsersModal } from '../components/PracticeUsersModal';
 
-const PracticeActions = ({ practice, onRefresh }: { practice: Practice, onRefresh: () => void }) => {
+const PracticeActions = ({ practice, onRefresh, onViewUsers }: { practice: Practice, onRefresh: () => void, onViewUsers: (practice: Practice) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleStatus = async () => {
@@ -34,6 +35,15 @@ const PracticeActions = ({ practice, onRefresh }: { practice: Practice, onRefres
           <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-slate-200 z-20 overflow-hidden">
             <button
+              onClick={() => {
+                setIsOpen(false);
+                onViewUsers(practice);
+              }}
+              className="w-full text-left px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-100"
+            >
+              View Staff / Users
+            </button>
+            <button
               onClick={toggleStatus}
               className={`w-full text-left px-4 py-2 text-sm font-medium ${practice.status === 'ACTIVE' ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}
             >
@@ -60,6 +70,9 @@ export function PracticesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const [selectedPractice, setSelectedPractice] = useState<Practice | null>(null);
+  const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
 
   const fetchPractices = async () => {
     try {
@@ -161,7 +174,14 @@ export function PracticesPage() {
                       {new Date(practice.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <PracticeActions practice={practice} onRefresh={fetchPractices} />
+                      <PracticeActions 
+                        practice={practice} 
+                        onRefresh={fetchPractices} 
+                        onViewUsers={(p) => {
+                          setSelectedPractice(p);
+                          setIsUsersModalOpen(true);
+                        }}
+                      />
                     </td>
                   </tr>
                 ))
@@ -178,6 +198,16 @@ export function PracticesPage() {
           setIsModalOpen(false);
           fetchPractices();
         }}
+      />
+      
+      <PracticeUsersModal
+        isOpen={isUsersModalOpen}
+        onClose={() => {
+          setIsUsersModalOpen(false);
+          setSelectedPractice(null);
+        }}
+        practiceId={selectedPractice?.id || null}
+        practiceName={selectedPractice?.name || ''}
       />
     </div>
   );
