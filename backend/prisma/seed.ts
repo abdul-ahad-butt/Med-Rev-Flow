@@ -59,8 +59,10 @@ async function main() {
     prisma.user.create({ data: { practiceId: practice.id, email: 'billing@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Maria', lastName: 'Rodriguez', role: 'BILLING' } }),
     prisma.user.create({ data: { practiceId: practice.id, email: 'frontdesk@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Jennifer', lastName: 'Wilson', role: 'STAFF' } }),
     prisma.user.create({ data: { practiceId: practice.id, email: 'admin@medrevflow.demo', passwordHash: await bcrypt.hash('admin123', 12), firstName: 'Admin', lastName: 'User', role: 'ADMIN' } }),
+    // Real-time Super Admin
+    prisma.user.create({ data: { email: 'abdulahadbutt420@gmail.com', passwordHash: await bcrypt.hash('Qaz123$$', 12), firstName: 'Abdul Ahad', lastName: 'Butt', role: 'SUPER_ADMIN' } }),
   ]);
-  console.log('✅ 4 users created');
+  console.log('✅ 6 users created');
   const [owner, manager, billing, frontDesk] = users;
 
   // ── Providers ─────────────────────────────────────────────────────────────
