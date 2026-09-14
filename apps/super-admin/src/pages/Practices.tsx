@@ -22,7 +22,7 @@ export function PracticesPage() {
   const fetchPractices = async () => {
     try {
       const res = await api.get('/admin/practices');
-      setPractices(res.data);
+      setPractices(res.data.data || []);
     } catch (error) {
       toast.error('Failed to load practices');
     } finally {
