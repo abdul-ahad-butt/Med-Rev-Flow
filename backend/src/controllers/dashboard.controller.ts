@@ -10,11 +10,17 @@ export const getDashboard = async (c: Context) => {
     }
     const now = new Date();
     const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
     // KPIs
     const [
       totalRevenueResult,
-      outstandingARResult,
+      ar0_30,
+      ar31_60,
+      ar61_90,
+      ar90_plus,
       deniedClaimsCount,
       pendingClaimsCount,
       todayAppointments,
@@ -32,10 +38,29 @@ export const getDashboard = async (c: Context) => {
         where: { claim: { provider: { practiceId } } },
         _sum: { amount: true },
       }),
-      // Outstanding A/R (sum of unresolved balances)
+      // Outstanding A/R (sum of unresolved balances - 0-30 days)
       prisma.claim.aggregate({
-        where: { provider: { practiceId }, status: { notIn: ['PAID', 'CLOSED'] } },
+        where: { provider: { practiceId }, status: { notIn: ['PAID', 'CLOSED'] }, dateOfService: { gte: thirtyDaysAgo } },
         _sum: { billedAmount: true, paidAmount: true },
+        _count: true
+      }),
+      // Outstanding A/R (sum of unresolved balances - 31-60 days)
+      prisma.claim.aggregate({
+        where: { provider: { practiceId }, status: { notIn: ['PAID', 'CLOSED'] }, dateOfService: { lt: thirtyDaysAgo, gte: sixtyDaysAgo } },
+        _sum: { billedAmount: true, paidAmount: true },
+        _count: true
+      }),
+      // Outstanding A/R (sum of unresolved balances - 61-90 days)
+      prisma.claim.aggregate({
+        where: { provider: { practiceId }, status: { notIn: ['PAID', 'CLOSED'] }, dateOfService: { lt: sixtyDaysAgo, gte: ninetyDaysAgo } },
+        _sum: { billedAmount: true, paidAmount: true },
+        _count: true
+      }),
+      // Outstanding A/R (sum of unresolved balances - 90+ days)
+      prisma.claim.aggregate({
+        where: { provider: { practiceId }, status: { notIn: ['PAID', 'CLOSED'] }, dateOfService: { lt: ninetyDaysAgo } },
+        _sum: { billedAmount: true, paidAmount: true },
+        _count: true
       }),
       // Denied claims count
       prisma.claim.count({
@@ -127,14 +152,19 @@ export const getDashboard = async (c: Context) => {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     // Calculate A/R
-    const outstandingAR = Math.max(0, Number(outstandingARResult?._sum?.billedAmount || 0) - Number(outstandingARResult?._sum?.paidAmount || 0));
+    const bal0_30 = Math.max(0, Number(ar0_30?._sum?.billedAmount || 0) - Number(ar0_30?._sum?.paidAmount || 0));
+    const bal31_60 = Math.max(0, Number(ar31_60?._sum?.billedAmount || 0) - Number(ar31_60?._sum?.paidAmount || 0));
+    const bal61_90 = Math.max(0, Number(ar61_90?._sum?.billedAmount || 0) - Number(ar61_90?._sum?.paidAmount || 0));
+    const bal90_plus = Math.max(0, Number(ar90_plus?._sum?.billedAmount || 0) - Number(ar90_plus?._sum?.paidAmount || 0));
     
-    // Mock AR buckets based on total A/R for visual purposes
+    const outstandingAR = bal0_30 + bal31_60 + bal61_90 + bal90_plus;
+    
+    // Real AR buckets based on date of service
     const arBuckets = [
-      { agingBucket: '0-30', _sum: { balance: outstandingAR * 0.4 }, _count: 10 },
-      { agingBucket: '31-60', _sum: { balance: outstandingAR * 0.3 }, _count: 8 },
-      { agingBucket: '61-90', _sum: { balance: outstandingAR * 0.2 }, _count: 5 },
-      { agingBucket: '90+', _sum: { balance: outstandingAR * 0.1 }, _count: 3 },
+      { agingBucket: '0-30', _sum: { balance: bal0_30 }, _count: ar0_30?._count || 0 },
+      { agingBucket: '31-60', _sum: { balance: bal31_60 }, _count: ar31_60?._count || 0 },
+      { agingBucket: '61-90', _sum: { balance: bal61_90 }, _count: ar61_90?._count || 0 },
+      { agingBucket: '90+', _sum: { balance: bal90_plus }, _count: ar90_plus?._count || 0 },
     ];
 
     // Calculate recovery opportunity (denied amount - recovered)

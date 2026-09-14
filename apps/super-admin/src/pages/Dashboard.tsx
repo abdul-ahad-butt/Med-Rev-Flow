@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Building2, Users, Activity, TrendingUp } from 'lucide-react';
+import api from '../api/client';
+import toast from 'react-hot-toast';
 
 export function DashboardPage() {
   const [stats, setStats] = useState({
@@ -8,16 +10,34 @@ export function DashboardPage() {
     systemHealth: '100%',
     activeSessions: 0,
   });
+  
+  const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    // In a real app, this would be an API call to /api/admin/dashboard
-    // For now, we simulate the data
-    setStats({
-      totalPractices: 1,
-      totalUsers: 5,
-      systemHealth: '99.9%',
-      activeSessions: 12,
-    });
+    const fetchDashboard = async () => {
+      try {
+        const res = await api.get('/admin/dashboard');
+        const data = res.data;
+        
+        setStats({
+          totalPractices: data.stats.totalPractices,
+          totalUsers: data.stats.totalUsers,
+          systemHealth: '100%', // Hardcoded for now unless you have a real uptime endpoint
+          activeSessions: data.stats.totalUsers * 2, // Proxy for sessions
+        });
+        
+        if (data.recentActivity) {
+          setRecentActivity(data.recentActivity);
+        }
+      } catch (err) {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchDashboard();
   }, []);
 
   return (
@@ -42,17 +62,55 @@ export function DashboardPage() {
                   <Icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-900 mb-1">{stat.value}</div>
+              <div className="text-2xl font-bold text-slate-900 mb-1">{loading ? '...' : stat.value}</div>
               <div className="text-sm text-slate-500">{stat.label}</div>
             </div>
           );
         })}
       </div>
       
-      {/* Placeholder for more global charts/tables */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col items-center justify-center h-64 text-slate-400">
-        <Activity className="w-12 h-12 mb-4 text-slate-300" />
-        <p>Detailed analytics coming soon</p>
+      {/* Recent Activity Table */}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-slate-900">Recent Activity</h2>
+          <p className="text-sm text-slate-500">Latest actions across all tenant practices.</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Action</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">User</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-slate-500">Loading activity...</td>
+                </tr>
+              ) : recentActivity.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-6 py-8 text-center text-slate-500">No recent activity found.</td>
+                </tr>
+              ) : (
+                recentActivity.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 font-medium">
+                      {log.action.replace(/_/g, ' ')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                      {log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      {new Date(log.createdAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
