@@ -37,8 +37,23 @@ app.use('*', async (c, next) => {
 });
 
 app.use('*', async (c, next) => {
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'https://med-rev-flow.pages.dev',
+    'https://super-admin-med-rev-flow.pages.dev'
+  ];
+  const envOrigin = (c.env as any)?.FRONTEND_URL;
+  if (envOrigin && !allowedOrigins.includes(envOrigin)) {
+    allowedOrigins.push(envOrigin);
+  }
+
   const corsMiddleware = cors({
-    origin: (c.env as any)?.FRONTEND_URL || 'https://med-rev-flow.pages.dev',
+    origin: (origin) => {
+      return allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+    },
     credentials: true,
   });
   return corsMiddleware(c, next);
