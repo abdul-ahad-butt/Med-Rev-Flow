@@ -127,7 +127,7 @@ export const getDashboard = async (c: Context) => {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     // Calculate A/R
-    const outstandingAR = Math.max(0, (outstandingARResult._sum.billedAmount || 0) - (outstandingARResult._sum.paidAmount || 0));
+    const outstandingAR = Math.max(0, Number(outstandingARResult._sum.billedAmount || 0) - Number(outstandingARResult._sum.paidAmount || 0));
     
     // Mock AR buckets based on total A/R for visual purposes
     const arBuckets = [

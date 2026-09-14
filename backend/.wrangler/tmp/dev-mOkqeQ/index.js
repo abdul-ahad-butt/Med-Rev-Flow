@@ -16524,7 +16524,7 @@ var getDashboard = /* @__PURE__ */ __name(async (c) => {
       monthlyRevenueMap[monthStr] = (monthlyRevenueMap[monthStr] || 0) + p.amount;
     });
     const monthlyRevenue = Object.entries(monthlyRevenueMap).map(([month, revenue]) => ({ month, revenue })).sort((a, b) => a.month.localeCompare(b.month));
-    const outstandingAR = Math.max(0, (outstandingARResult._sum.billedAmount || 0) - (outstandingARResult._sum.paidAmount || 0));
+    const outstandingAR = Math.max(0, Number(outstandingARResult._sum.billedAmount || 0) - Number(outstandingARResult._sum.paidAmount || 0));
     const arBuckets = [
       { agingBucket: "0-30", _sum: { balance: outstandingAR * 0.4 }, _count: 10 },
       { agingBucket: "31-60", _sum: { balance: outstandingAR * 0.3 }, _count: 8 },

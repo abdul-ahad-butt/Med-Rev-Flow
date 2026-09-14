@@ -25,18 +25,12 @@ import { ReportsPage } from './pages/Reports'
 import { SettingsPage } from './pages/Settings'
 import { RevenueCyclePage } from './pages/RevenueCycle'
 import { AuditPage } from './pages/Audit'
-import { AdminLayout } from './layouts/AdminLayout'
-import { AdminDashboard } from './pages/admin/AdminDashboard'
-import { PracticesPage } from './pages/admin/Practices'
 
 // Route guard component
 function RoleRoute({ permission, children }: { permission: Permission; children: React.ReactNode }) {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
   if (!hasPermission(user.role, permission)) {
-    if (user.role === 'SUPER_ADMIN') {
-      return <Navigate to="/admin/dashboard" replace />;
-    }
     return <Navigate to="/app/dashboard" replace />;
   }
   return <>{children}</>;
@@ -86,16 +80,6 @@ export default function App() {
         <Route path="audit" element={<RoleRoute permission={Permission.VIEW_AUDIT_LOG}><AuditPage /></RoleRoute>} />
       </Route>
 
-      {/* Admin App */}
-      <Route path="/admin" element={
-        <ProtectedRoute>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<RoleRoute permission={Permission.PLATFORM_VIEW_ANALYTICS}><AdminDashboard /></RoleRoute>} />
-        <Route path="practices" element={<RoleRoute permission={Permission.PLATFORM_MANAGE_PRACTICES}><PracticesPage /></RoleRoute>} />
-      </Route>
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
