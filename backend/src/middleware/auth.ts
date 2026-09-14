@@ -2,12 +2,11 @@ import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
 import { config } from '../config/env';
 import { prisma } from '../config/prisma';
-type UserRole = 'SUPER_ADMIN' | 'PRACTICE_OWNER' | 'PRACTICE_MANAGER' | 'BILLING_STAFF' | 'FRONT_DESK' | 'MARKETING_MANAGER' | 'VIEWER';
-import { User } from '@prisma/client';
+import { UserRole, Permission, hasPermission } from './permissions';
 
 export interface AuthPayload {
   userId: string;
-  practiceId: string;
+  practiceId: string | null;
   role: UserRole;
   email: string;
 }
@@ -48,6 +47,7 @@ export const authenticate = async (
   }
 };
 
+// For backward compatibility or specific role checks (mostly for SUPER_ADMIN)
 export const authorize = (...roles: UserRole[]) => {
   return async (c: Context, next: Next) => {
     const user = c.get('user') as AuthPayload;
@@ -61,32 +61,15 @@ export const authorize = (...roles: UserRole[]) => {
   };
 };
 
-// Role hierarchy — higher roles have access to lower role resources
-export const canAccess = (...allowedRoles: UserRole[]) => {
+export const requirePermission = (permission: Permission) => {
   return async (c: Context, next: Next) => {
     const user = c.get('user') as AuthPayload;
     if (!user) {
       return c.json({ error: 'Authentication required' }, 401);
     }
 
-    const roleHierarchy: UserRole[] = [
-      'SUPER_ADMIN',
-      'PRACTICE_OWNER',
-      'PRACTICE_MANAGER',
-      'BILLING_STAFF',
-      'FRONT_DESK',
-      'MARKETING_MANAGER',
-      'VIEWER',
-    ];
-
-    const userRoleIndex = roleHierarchy.indexOf(user.role);
-    const hasAccess = allowedRoles.some(role => {
-      const allowedIndex = roleHierarchy.indexOf(role);
-      return userRoleIndex <= allowedIndex;
-    });
-
-    if (!hasAccess && !allowedRoles.includes(user.role)) {
-      return c.json({ error: 'Insufficient permissions' }, 403);
+    if (!hasPermission(user.role, permission)) {
+      return c.json({ error: `Insufficient permissions: Requires ${permission}` }, 403);
     }
 
     await next();

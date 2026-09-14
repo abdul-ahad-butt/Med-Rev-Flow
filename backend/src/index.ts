@@ -26,6 +26,7 @@ import { leadsRouter } from './routes/leads.routes';
 import { seoRouter } from './routes/seo.routes';
 import { reportsRouter } from './routes/reports.routes';
 import { settingsRouter } from './routes/settings.routes';
+import { adminRouter } from './routes/admin.routes';
 import { contactRouter } from './routes/contact.routes';
 import { auditRouter } from './routes/audit.routes';
 
@@ -68,6 +69,7 @@ app.route('/api/leads', leadsRouter);
 app.route('/api/seo', seoRouter);
 app.route('/api/reports', reportsRouter);
 app.route('/api/settings', settingsRouter);
+app.route('/api/admin', adminRouter);
 app.route('/api/contact', contactRouter);
 app.route('/api/audit', auditRouter);
 

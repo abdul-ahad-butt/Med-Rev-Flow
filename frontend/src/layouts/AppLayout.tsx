@@ -1,3 +1,4 @@
+import { hasPermission, Permission } from '../config/permissions';
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -11,24 +12,25 @@ import { getInitials } from '../utils/cn'
 import api from '../api/client'
 import toast from 'react-hot-toast'
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, path: '/app/dashboard' },
-  { label: 'Revenue Cycle', icon: TrendingUp, path: '/app/revenue-cycle' },
-  { label: 'Claims', icon: FileText, path: '/app/claims' },
-  { label: 'Denials', icon: AlertCircle, path: '/app/denials' },
-  { label: 'Accounts Receivable', icon: DollarSign, path: '/app/ar' },
-  { label: 'Prior Authorization', icon: Shield, path: '/app/prior-authorizations' },
-  { label: 'Patients', icon: Users, path: '/app/patients' },
-  { label: 'Appointments', icon: Calendar, path: '/app/appointments' },
-  { label: 'Providers', icon: UserCog, path: '/app/providers' },
-  { label: 'Insurance', icon: Building2, path: '/app/insurance' },
-  { label: 'Marketing & SEO', icon: LineChart, path: '/app/marketing' },
-  { label: 'Leads & CRM', icon: Activity, path: '/app/leads' },
-  { label: 'Reports', icon: BarChart3, path: '/app/reports' },
-  { label: 'Tasks', icon: CheckSquare, path: '/app/tasks' },
-  { label: 'Messages', icon: MessageSquare, path: '/app/messages' },
-  { label: 'Settings', icon: Settings, path: '/app/settings' },
+const NAV_ITEMS: { key: string, label: string, icon: any, path: string, permission: Permission }[] = [
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/app/dashboard', permission: Permission.VIEW_DASHBOARD },
+  { key: 'revenue-cycle', label: 'Revenue Cycle', icon: TrendingUp, path: '/app/revenue-cycle', permission: Permission.VIEW_CLAIMS },
+  { key: 'claims', label: 'Claims', icon: FileText, path: '/app/claims', permission: Permission.VIEW_CLAIMS },
+  { key: 'denials', label: 'Denials', icon: AlertCircle, path: '/app/denials', permission: Permission.VIEW_DENIALS },
+  { key: 'ar', label: 'Accounts Receivable', icon: DollarSign, path: '/app/ar', permission: Permission.VIEW_AR },
+  { key: 'prior-authorizations', label: 'Prior Authorization', icon: Shield, path: '/app/prior-authorizations', permission: Permission.VIEW_PATIENTS },
+  { key: 'patients', label: 'Patients', icon: Users, path: '/app/patients', permission: Permission.VIEW_PATIENTS },
+  { key: 'appointments', label: 'Appointments', icon: Calendar, path: '/app/appointments', permission: Permission.VIEW_APPOINTMENTS },
+  { key: 'providers', label: 'Providers', icon: UserCog, path: '/app/providers', permission: Permission.VIEW_PROVIDERS },
+  { key: 'insurance', label: 'Insurance', icon: Building2, path: '/app/insurance', permission: Permission.VIEW_INSURANCE },
+  { key: 'marketing', label: 'Marketing & SEO', icon: LineChart, path: '/app/marketing', permission: Permission.VIEW_MARKETING },
+  { key: 'leads', label: 'Leads & CRM', icon: Activity, path: '/app/leads', permission: Permission.VIEW_LEADS },
+  { key: 'reports', label: 'Reports', icon: BarChart3, path: '/app/reports', permission: Permission.VIEW_REPORTS },
+  { key: 'tasks', label: 'Tasks', icon: CheckSquare, path: '/app/tasks', permission: Permission.VIEW_TASKS },
+  { key: 'messages', label: 'Messages', icon: MessageSquare, path: '/app/messages', permission: Permission.VIEW_MESSAGES },
+  { key: 'settings', label: 'Settings', icon: Settings, path: '/app/settings', permission: Permission.MANAGE_PRACTICE_SETTINGS },
 ]
+
 
 export function AppLayout() {
   const { user, clearAuth } = useAuthStore()
@@ -69,7 +71,7 @@ export function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 px-2 sidebar-scroll space-y-0.5">
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.filter(item => hasPermission(user?.role, item.permission)).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
@@ -86,6 +88,7 @@ export function AppLayout() {
 
         {/* Bottom section */}
         <div className="border-t border-slate-200 py-3 px-2 space-y-0.5">
+        {hasPermission(user?.role, Permission.VIEW_AUDIT_LOG) && (
           <NavLink
             to="/app/audit"
             className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''} ${!sidebarOpen ? 'justify-center px-2' : ''}`}
@@ -94,6 +97,7 @@ export function AppLayout() {
             <HelpCircle className="w-4 h-4 flex-shrink-0" />
             {sidebarOpen && <span>Audit Log</span>}
           </NavLink>
+        )}
 
           {/* User profile */}
           <div className="relative">

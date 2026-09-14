@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getSEODashboard, getKeywords, updateKeyword, createKeyword } from '../controllers/seo.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const seoRouter = new Hono();
 seoRouter.use('*', authenticate);
+seoRouter.use('*', requirePermission(Permission.VIEW_MARKETING));
 seoRouter.get('/', getSEODashboard);
 seoRouter.get('/keywords', getKeywords);
 seoRouter.post('/keywords', createKeyword);

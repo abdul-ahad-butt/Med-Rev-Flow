@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getTasks, createTask, updateTask, deleteTask } from '../controllers/tasks.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const tasksRouter = new Hono();
 tasksRouter.use('*', authenticate);
+tasksRouter.use('*', requirePermission(Permission.VIEW_TASKS));
 tasksRouter.get('/', getTasks);
 tasksRouter.post('/', createTask);
 tasksRouter.patch('/:id', updateTask);

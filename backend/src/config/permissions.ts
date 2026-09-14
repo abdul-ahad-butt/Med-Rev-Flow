@@ -1,0 +1,41 @@
+﻿export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'PRACTICE_OWNER'
+  | 'PRACTICE_MANAGER'
+  | 'BILLING_STAFF'
+  | 'FRONT_DESK'
+  | 'MARKETING_MANAGER'
+  | 'VIEWER';
+
+export const PRACTICE_ROLES: UserRole[] = [
+  'PRACTICE_OWNER',
+  'PRACTICE_MANAGER',
+  'BILLING_STAFF',
+  'FRONT_DESK',
+  'MARKETING_MANAGER',
+  'VIEWER',
+];
+
+export const BILLING_ROLES: UserRole[] = [
+  'PRACTICE_OWNER',
+  'PRACTICE_MANAGER',
+  'BILLING_STAFF',
+];
+
+export const MANAGEMENT_ROLES: UserRole[] = [
+  'PRACTICE_OWNER',
+  'PRACTICE_MANAGER',
+];
+
+export const SCHEDULING_ROLES: UserRole[] = [
+  'PRACTICE_OWNER',
+  'PRACTICE_MANAGER',
+  'FRONT_DESK',
+];
+
+export const PATIENT_ROLES: UserRole[] = [
+  'PRACTICE_OWNER',
+  'PRACTICE_MANAGER',
+  'BILLING_STAFF',
+  'FRONT_DESK',
+];

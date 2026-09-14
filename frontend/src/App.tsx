@@ -1,8 +1,10 @@
+import { hasPermission, Permission } from './config/permissions';
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth.store'
 import { AppLayout } from './layouts/AppLayout'
 import { LandingPage } from './pages/Landing'
 import { LoginPage } from './pages/auth/Login'
+import ChangePassword from './pages/auth/ChangePassword'
 import { DashboardPage } from './pages/Dashboard'
 import { ClaimsPage } from './pages/Claims'
 import { ClaimDetailPage } from './pages/ClaimDetail'
@@ -23,10 +25,27 @@ import { ReportsPage } from './pages/Reports'
 import { SettingsPage } from './pages/Settings'
 import { RevenueCyclePage } from './pages/RevenueCycle'
 import { AuditPage } from './pages/Audit'
+import { AdminLayout } from './layouts/AdminLayout'
+import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { PracticesPage } from './pages/admin/Practices'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { token } = useAuthStore()
+// Route guard component
+function RoleRoute({ permission, children }: { permission: Permission; children: React.ReactNode }) {
+  const { user } = useAuthStore();
+  if (!user) return <Navigate to="/login" replace />;
+  if (!hasPermission(user.role, permission)) {
+    if (user.role === 'SUPER_ADMIN') {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    return <Navigate to="/app/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
+function ProtectedRoute({ children, allowPasswordChange = false }: { children: React.ReactNode, allowPasswordChange?: boolean }) {
+  const { token, user } = useAuthStore()
   if (!token) return <Navigate to="/login" replace />
+  if (user?.mustChangePassword && !allowPasswordChange) return <Navigate to="/change-password" replace />
   return <>{children}</>
 }
 
@@ -36,6 +55,7 @@ export default function App() {
       {/* Public */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ProtectedRoute allowPasswordChange><ChangePassword /></ProtectedRoute>} />
 
       {/* Protected App */}
       <Route path="/app" element={
@@ -44,26 +64,37 @@ export default function App() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/app/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="revenue-cycle" element={<RevenueCyclePage />} />
-        <Route path="claims" element={<ClaimsPage />} />
-        <Route path="claims/:id" element={<ClaimDetailPage />} />
-        <Route path="denials" element={<DenialsPage />} />
-        <Route path="denials/:id" element={<DenialDetailPage />} />
-        <Route path="ar" element={<ARPage />} />
-        <Route path="prior-authorizations" element={<PriorAuthPage />} />
-        <Route path="patients" element={<PatientsPage />} />
-        <Route path="patients/:id" element={<PatientDetailPage />} />
-        <Route path="appointments" element={<AppointmentsPage />} />
-        <Route path="providers" element={<ProvidersPage />} />
-        <Route path="insurance" element={<InsurancePage />} />
-        <Route path="tasks" element={<TasksPage />} />
-        <Route path="messages" element={<MessagesPage />} />
-        <Route path="marketing" element={<MarketingPage />} />
-        <Route path="leads" element={<LeadsPage />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="audit" element={<AuditPage />} />
+        <Route path="dashboard" element={<RoleRoute permission={Permission.VIEW_DASHBOARD}><DashboardPage /></RoleRoute>} />
+        <Route path="revenue-cycle" element={<RoleRoute permission={Permission.VIEW_CLAIMS}><RevenueCyclePage /></RoleRoute>} />
+        <Route path="claims" element={<RoleRoute permission={Permission.VIEW_CLAIMS}><ClaimsPage /></RoleRoute>} />
+        <Route path="claims/:id" element={<RoleRoute permission={Permission.VIEW_CLAIMS}><ClaimDetailPage /></RoleRoute>} />
+        <Route path="denials" element={<RoleRoute permission={Permission.VIEW_DENIALS}><DenialsPage /></RoleRoute>} />
+        <Route path="denials/:id" element={<RoleRoute permission={Permission.VIEW_DENIALS}><DenialDetailPage /></RoleRoute>} />
+        <Route path="ar" element={<RoleRoute permission={Permission.VIEW_AR}><ARPage /></RoleRoute>} />
+        <Route path="prior-authorizations" element={<RoleRoute permission={Permission.VIEW_PATIENTS}><PriorAuthPage /></RoleRoute>} />
+        <Route path="patients" element={<RoleRoute permission={Permission.VIEW_PATIENTS}><PatientsPage /></RoleRoute>} />
+        <Route path="patients/:id" element={<RoleRoute permission={Permission.VIEW_PATIENTS}><PatientDetailPage /></RoleRoute>} />
+        <Route path="appointments" element={<RoleRoute permission={Permission.VIEW_APPOINTMENTS}><AppointmentsPage /></RoleRoute>} />
+        <Route path="providers" element={<RoleRoute permission={Permission.VIEW_PROVIDERS}><ProvidersPage /></RoleRoute>} />
+        <Route path="insurance" element={<RoleRoute permission={Permission.VIEW_INSURANCE}><InsurancePage /></RoleRoute>} />
+        <Route path="tasks" element={<RoleRoute permission={Permission.VIEW_TASKS}><TasksPage /></RoleRoute>} />
+        <Route path="messages" element={<RoleRoute permission={Permission.VIEW_MESSAGES}><MessagesPage /></RoleRoute>} />
+        <Route path="marketing" element={<RoleRoute permission={Permission.VIEW_MARKETING}><MarketingPage /></RoleRoute>} />
+        <Route path="leads" element={<RoleRoute permission={Permission.VIEW_LEADS}><LeadsPage /></RoleRoute>} />
+        <Route path="reports" element={<RoleRoute permission={Permission.VIEW_REPORTS}><ReportsPage /></RoleRoute>} />
+        <Route path="settings" element={<RoleRoute permission={Permission.MANAGE_PRACTICE_SETTINGS}><SettingsPage /></RoleRoute>} />
+        <Route path="audit" element={<RoleRoute permission={Permission.VIEW_AUDIT_LOG}><AuditPage /></RoleRoute>} />
+      </Route>
+
+      {/* Admin App */}
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <AdminLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="dashboard" element={<RoleRoute permission={Permission.PLATFORM_VIEW_ANALYTICS}><AdminDashboard /></RoleRoute>} />
+        <Route path="practices" element={<RoleRoute permission={Permission.PLATFORM_MANAGE_PRACTICES}><PracticesPage /></RoleRoute>} />
       </Route>
 
       {/* Fallback */}

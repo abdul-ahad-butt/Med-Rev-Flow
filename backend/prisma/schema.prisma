@@ -9,49 +9,61 @@ generator client {
 }
 
 model Practice {
-  id        String   @id @default(uuid())
-  name      String
-  taxId     String?
-  npi       String?
-  address   String?
-  city      String?
-  state     String?
-  zipCode   String?
-  phone     String?
-  email     String?
-  website   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id           String   @id @default(uuid())
+  name         String
+  legalName    String?
+  specialty    String?
+  practiceType String?
+  status       String   @default("ACTIVE") // ACTIVE, SUSPENDED, INACTIVE
+  taxId        String?
+  npi          String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  phone        String?
+  email        String?
+  website      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   users        User[]
   providers    Provider[]
   patients     Patient[]
   leads        Lead[]
   settings     PracticeSetting[]
+  claims       Claim[]
+  denials      Denial[]
+  appointments Appointment[]
+  insurances   Insurance[]
+  tasks        Task[]
+  messages     Message[]
+  priorAuths   PriorAuthorization[]
 }
 
 model User {
-  id           String   @id @default(uuid())
-  practiceId   String
-  email        String   @unique
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         String   @default("VIEWER") // ADMIN, BILLING, PROVIDER, STAFF, VIEWER
-  isActive     Boolean  @default(true)
-  lastLoginAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  practiceId         String?   // NULL for SUPER_ADMIN
+  email              String    @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  role               String    @default("VIEWER") // SUPER_ADMIN, PRACTICE_OWNER, PRACTICE_MANAGER, BILLING_STAFF, FRONT_DESK, VIEWER
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  practice         Practice       @relation(fields: [practiceId], references: [id])
-  tasksAssigned    Task[]         @relation("AssignedTasks")
-  tasksCreated     Task[]         @relation("CreatedTasks")
-  denialAssignments Denial[]      @relation("AssignedDenials")
-  auditLogs        AuditLog[]
-  notes            Note[]
-  notifications    Notification[]
-  messagesSent     Message[]      @relation("MessagesSent")
-  messagesReceived Message[]      @relation("MessagesReceived")
+  practice          Practice?  @relation(fields: [practiceId], references: [id])
+  tasksAssigned     Task[]     @relation("AssignedTasks")
+  tasksCreated      Task[]     @relation("CreatedTasks")
+  denialAssignments Denial[]   @relation("AssignedDenials")
+  auditLogs         AuditLog[]
+  notes             Note[]
+  notifications     Notification[]
+  messagesSent      Message[]  @relation("MessagesSent")
+  messagesReceived  Message[]  @relation("MessagesReceived")
 
   @@index([practiceId])
 }
@@ -105,6 +117,7 @@ model Patient {
 
 model Appointment {
   id             String   @id @default(uuid())
+  practiceId     String?
   patientId      String
   providerId     String
   startTime      DateTime
@@ -115,15 +128,18 @@ model Appointment {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  practice       Practice? @relation(fields: [practiceId], references: [id])
   patient        Patient   @relation(fields: [patientId], references: [id])
   provider       Provider  @relation(fields: [providerId], references: [id])
 
+  @@index([practiceId])
   @@index([patientId])
   @@index([providerId])
 }
 
 model Insurance {
   id             String   @id @default(uuid())
+  practiceId     String?
   name           String
   payerId        String?
   address        String?
@@ -134,8 +150,11 @@ model Insurance {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  practice       Practice? @relation(fields: [practiceId], references: [id])
   claims         Claim[]
   policies       PatientPolicy[]
+
+  @@index([practiceId])
 }
 
 model PatientPolicy {
@@ -154,6 +173,7 @@ model PatientPolicy {
 model Claim {
   id              String   @id @default(uuid())
   claimNumber     String   @unique
+  practiceId      String?
   patientId       String
   providerId      String
   insuranceId     String?
@@ -170,6 +190,7 @@ model Claim {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  practice        Practice?     @relation(fields: [practiceId], references: [id])
   patient         Patient       @relation(fields: [patientId], references: [id])
   provider        Provider      @relation(fields: [providerId], references: [id])
   insurance       Insurance?    @relation(fields: [insuranceId], references: [id])
@@ -177,6 +198,7 @@ model Claim {
   payments        Payment[]
   statusHistory   ClaimStatusHistory[]
 
+  @@index([practiceId])
   @@index([patientId])
   @@index([providerId])
   @@index([insuranceId])
@@ -198,6 +220,7 @@ model ClaimStatusHistory {
 
 model Denial {
   id              String   @id @default(uuid())
+  practiceId      String?
   claimId         String
   denialDate      DateTime
   denialReason    String
@@ -211,11 +234,13 @@ model Denial {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  practice        Practice? @relation(fields: [practiceId], references: [id])
   claim           Claim    @relation(fields: [claimId], references: [id])
   assignedTo      User?    @relation("AssignedDenials", fields: [assignedToId], references: [id])
   notes           Note[]
   appeals         Appeal[]
 
+  @@index([practiceId])
   @@index([claimId])
   @@index([assignedToId])
   @@index([status])
@@ -241,6 +266,7 @@ model Payment {
 
 model Task {
   id              String   @id @default(uuid())
+  practiceId      String?
   title           String
   description     String?
   dueDate         DateTime?
@@ -251,9 +277,11 @@ model Task {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  practice        Practice? @relation(fields: [practiceId], references: [id])
   assignedTo      User?    @relation("AssignedTasks", fields: [assignedToId], references: [id])
   createdBy       User     @relation("CreatedTasks", fields: [createdById], references: [id])
 
+  @@index([practiceId])
   @@index([assignedToId])
   @@index([createdById])
   @@index([status])
@@ -291,6 +319,7 @@ model Appeal {
 
 model PriorAuthorization {
   id              String   @id @default(uuid())
+  practiceId      String?
   patientId       String
   insuranceId     String?
   authNumber      String?
@@ -304,14 +333,17 @@ model PriorAuthorization {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  practice        Practice? @relation(fields: [practiceId], references: [id])
   patient         Patient  @relation(fields: [patientId], references: [id])
 
+  @@index([practiceId])
   @@index([patientId])
   @@index([status])
 }
 
 model Message {
   id              String   @id @default(uuid())
+  practiceId      String?
   senderId        String
   receiverId      String
   subject         String?
@@ -323,9 +355,11 @@ model Message {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  practice        Practice? @relation(fields: [practiceId], references: [id])
   sender          User     @relation("MessagesSent", fields: [senderId], references: [id])
   receiver        User     @relation("MessagesReceived", fields: [receiverId], references: [id])
 
+  @@index([practiceId])
   @@index([senderId])
   @@index([receiverId])
 }

@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getRevenueCycle, getClaimsReport, getDenialReport, getARReport, getProviderReport, getInsuranceReport, getPatientAcquisitionReport } from '../controllers/reports.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const reportsRouter = new Hono();
 reportsRouter.use('*', authenticate);
+reportsRouter.use('*', requirePermission(Permission.VIEW_REPORTS));
 reportsRouter.get('/revenue-cycle', getRevenueCycle);
 reportsRouter.get('/claims', getClaimsReport);
 reportsRouter.get('/denials', getDenialReport);

@@ -32,7 +32,15 @@ export function LoginPage() {
       const { token, user } = res.data
       setAuth(token, { ...user, practiceName: user.practice?.name })
       toast.success(`Welcome back, ${user.firstName}!`)
-      navigate('/app/dashboard')
+      (() => {
+          if (user.mustChangePassword) {
+            navigate('/change-password');
+          } else if (user.role === 'SUPER_ADMIN') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/app/dashboard');
+          }
+        })()
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
       toast.error(axiosErr?.response?.data?.error || 'Login failed. Check your credentials.')

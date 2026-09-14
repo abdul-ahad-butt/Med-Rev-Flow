@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getAppointments, getAppointment, createAppointment, updateAppointment, getAppointmentStats } from '../controllers/appointments.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const appointmentsRouter = new Hono();
 appointmentsRouter.use('*', authenticate);
+appointmentsRouter.use('*', requirePermission(Permission.VIEW_APPOINTMENTS));
 appointmentsRouter.get('/', getAppointments);
 appointmentsRouter.get('/stats', getAppointmentStats);
 appointmentsRouter.post('/', createAppointment);

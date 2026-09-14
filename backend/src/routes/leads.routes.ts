@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getLeads, getLead, createLead, updateLead, addLeadActivity, getLeadStats } from '../controllers/leads.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const leadsRouter = new Hono();
 leadsRouter.use('*', authenticate);
+leadsRouter.use('*', requirePermission(Permission.VIEW_LEADS));
 leadsRouter.get('/', getLeads);
 leadsRouter.get('/stats', getLeadStats);
 leadsRouter.post('/', createLead);

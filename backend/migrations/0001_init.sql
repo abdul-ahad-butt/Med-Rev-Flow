@@ -2,6 +2,10 @@
 CREATE TABLE "Practice" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
+    "legalName" TEXT,
+    "specialty" TEXT,
+    "practiceType" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
     "taxId" TEXT,
     "npi" TEXT,
     "address" TEXT,
@@ -18,17 +22,18 @@ CREATE TABLE "Practice" (
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "practiceId" TEXT NOT NULL,
+    "practiceId" TEXT,
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'VIEWER',
     "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "mustChangePassword" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "User_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "User_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -72,6 +77,7 @@ CREATE TABLE "Patient" (
 -- CreateTable
 CREATE TABLE "Appointment" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "patientId" TEXT NOT NULL,
     "providerId" TEXT NOT NULL,
     "startTime" DATETIME NOT NULL,
@@ -81,6 +87,7 @@ CREATE TABLE "Appointment" (
     "notes" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Appointment_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Appointment_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Appointment_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Provider" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -88,6 +95,7 @@ CREATE TABLE "Appointment" (
 -- CreateTable
 CREATE TABLE "Insurance" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "name" TEXT NOT NULL,
     "payerId" TEXT,
     "address" TEXT,
@@ -96,7 +104,8 @@ CREATE TABLE "Insurance" (
     "zipCode" TEXT,
     "phone" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Insurance_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -116,6 +125,7 @@ CREATE TABLE "PatientPolicy" (
 CREATE TABLE "Claim" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "claimNumber" TEXT NOT NULL,
+    "practiceId" TEXT,
     "patientId" TEXT NOT NULL,
     "providerId" TEXT NOT NULL,
     "insuranceId" TEXT,
@@ -131,6 +141,7 @@ CREATE TABLE "Claim" (
     "notes" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Claim_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Claim_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Claim_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "Provider" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Claim_insuranceId_fkey" FOREIGN KEY ("insuranceId") REFERENCES "Insurance" ("id") ON DELETE SET NULL ON UPDATE CASCADE
@@ -150,6 +161,7 @@ CREATE TABLE "ClaimStatusHistory" (
 -- CreateTable
 CREATE TABLE "Denial" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "claimId" TEXT NOT NULL,
     "denialDate" DATETIME NOT NULL,
     "denialReason" TEXT NOT NULL,
@@ -162,6 +174,7 @@ CREATE TABLE "Denial" (
     "followUpDate" DATETIME,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Denial_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Denial_claimId_fkey" FOREIGN KEY ("claimId") REFERENCES "Claim" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Denial_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -185,6 +198,7 @@ CREATE TABLE "Payment" (
 -- CreateTable
 CREATE TABLE "Task" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "dueDate" DATETIME,
@@ -194,6 +208,7 @@ CREATE TABLE "Task" (
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Task_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Task_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Task_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -226,6 +241,7 @@ CREATE TABLE "Appeal" (
 -- CreateTable
 CREATE TABLE "PriorAuthorization" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "patientId" TEXT NOT NULL,
     "insuranceId" TEXT,
     "authNumber" TEXT,
@@ -238,12 +254,14 @@ CREATE TABLE "PriorAuthorization" (
     "notes" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "PriorAuthorization_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "PriorAuthorization_patientId_fkey" FOREIGN KEY ("patientId") REFERENCES "Patient" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Message" (
     "id" TEXT NOT NULL PRIMARY KEY,
+    "practiceId" TEXT,
     "senderId" TEXT NOT NULL,
     "receiverId" TEXT NOT NULL,
     "subject" TEXT,
@@ -254,6 +272,7 @@ CREATE TABLE "Message" (
     "status" TEXT NOT NULL DEFAULT 'TODO',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Message_practiceId_fkey" FOREIGN KEY ("practiceId") REFERENCES "Practice" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Message_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -329,13 +348,22 @@ CREATE INDEX "Provider_practiceId_idx" ON "Provider"("practiceId");
 CREATE INDEX "Patient_practiceId_idx" ON "Patient"("practiceId");
 
 -- CreateIndex
+CREATE INDEX "Appointment_practiceId_idx" ON "Appointment"("practiceId");
+
+-- CreateIndex
 CREATE INDEX "Appointment_patientId_idx" ON "Appointment"("patientId");
 
 -- CreateIndex
 CREATE INDEX "Appointment_providerId_idx" ON "Appointment"("providerId");
 
 -- CreateIndex
+CREATE INDEX "Insurance_practiceId_idx" ON "Insurance"("practiceId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Claim_claimNumber_key" ON "Claim"("claimNumber");
+
+-- CreateIndex
+CREATE INDEX "Claim_practiceId_idx" ON "Claim"("practiceId");
 
 -- CreateIndex
 CREATE INDEX "Claim_patientId_idx" ON "Claim"("patientId");
@@ -353,6 +381,9 @@ CREATE INDEX "Claim_status_idx" ON "Claim"("status");
 CREATE INDEX "ClaimStatusHistory_claimId_idx" ON "ClaimStatusHistory"("claimId");
 
 -- CreateIndex
+CREATE INDEX "Denial_practiceId_idx" ON "Denial"("practiceId");
+
+-- CreateIndex
 CREATE INDEX "Denial_claimId_idx" ON "Denial"("claimId");
 
 -- CreateIndex
@@ -363,6 +394,9 @@ CREATE INDEX "Denial_status_idx" ON "Denial"("status");
 
 -- CreateIndex
 CREATE INDEX "Payment_claimId_idx" ON "Payment"("claimId");
+
+-- CreateIndex
+CREATE INDEX "Task_practiceId_idx" ON "Task"("practiceId");
 
 -- CreateIndex
 CREATE INDEX "Task_assignedToId_idx" ON "Task"("assignedToId");
@@ -383,10 +417,16 @@ CREATE INDEX "Note_denialId_idx" ON "Note"("denialId");
 CREATE INDEX "Appeal_denialId_idx" ON "Appeal"("denialId");
 
 -- CreateIndex
+CREATE INDEX "PriorAuthorization_practiceId_idx" ON "PriorAuthorization"("practiceId");
+
+-- CreateIndex
 CREATE INDEX "PriorAuthorization_patientId_idx" ON "PriorAuthorization"("patientId");
 
 -- CreateIndex
 CREATE INDEX "PriorAuthorization_status_idx" ON "PriorAuthorization"("status");
+
+-- CreateIndex
+CREATE INDEX "Message_practiceId_idx" ON "Message"("practiceId");
 
 -- CreateIndex
 CREATE INDEX "Message_senderId_idx" ON "Message"("senderId");

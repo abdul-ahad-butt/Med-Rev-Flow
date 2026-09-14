@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getProviders, getProvider, createProvider, updateProvider } from '../controllers/providers.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const providersRouter = new Hono();
 providersRouter.use('*', authenticate);
+providersRouter.use('*', requirePermission(Permission.VIEW_PROVIDERS));
 providersRouter.get('/', getProviders);
 providersRouter.post('/', createProvider);
 providersRouter.get('/:id', getProvider);

@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
-import {
-  getDenials, getDenial, updateDenial, addDenialNote, createAppeal, getDenialStats,
-} from '../controllers/denials.controller';
-import { authenticate } from '../middleware/auth';
+import { getDenials, getDenial, updateDenial, addDenialNote, createAppeal, getDenialStats } from '../controllers/denials.controller';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 
 export const denialsRouter = new Hono();
 denialsRouter.use('*', authenticate);
+denialsRouter.use('*', requirePermission(Permission.VIEW_DENIALS));
 
 denialsRouter.get('/', getDenials);
 denialsRouter.get('/summary', getDenialStats);

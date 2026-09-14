@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getConversations, getMessages, sendMessage, createConversation } from '../controllers/messages.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const messagesRouter = new Hono();
 messagesRouter.use('*', authenticate);
+messagesRouter.use('*', requirePermission(Permission.VIEW_MESSAGES));
 messagesRouter.get('/conversations', getConversations);
 messagesRouter.post('/conversations', createConversation);
 messagesRouter.get('/conversations/:id/messages', getMessages);

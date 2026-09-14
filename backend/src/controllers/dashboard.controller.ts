@@ -5,6 +5,9 @@ import { AuthPayload } from '../middleware/auth';
 export const getDashboard = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
+    if (!practiceId) {
+      return c.json({ error: 'Practice ID is required' }, 403);
+    }
     const now = new Date();
     const twelveMonthsAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
@@ -206,6 +209,9 @@ export const getDashboard = async (c: Context) => {
 export const getPriorityActions = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
+    if (!practiceId) {
+      return c.json({ error: 'Practice ID is required' }, 403);
+    }
     const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const timingLimit = new Date(Date.now() - 270 * 24 * 60 * 60 * 1000); // 270 days ago
 

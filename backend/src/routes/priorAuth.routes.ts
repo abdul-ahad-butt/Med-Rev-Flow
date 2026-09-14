@@ -1,8 +1,10 @@
 import { Hono } from 'hono';
 import { getPriorAuths, getPriorAuth, createPriorAuth, updatePriorAuth, getPriorAuthStats } from '../controllers/priorAuth.controller';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requirePermission } from '../middleware/auth';
+import { Permission } from '../middleware/permissions';
 export const priorAuthRouter = new Hono();
 priorAuthRouter.use('*', authenticate);
+priorAuthRouter.use('*', requirePermission(Permission.VIEW_PATIENTS));
 priorAuthRouter.get('/', getPriorAuths);
 priorAuthRouter.get('/stats', getPriorAuthStats);
 priorAuthRouter.post('/', createPriorAuth);
