@@ -29,6 +29,9 @@ import { settingsRouter } from './routes/settings.routes';
 import { adminRouter } from './routes/admin.routes';
 import { contactRouter } from './routes/contact.routes';
 import { auditRouter } from './routes/audit.routes';
+import { PrismaClient } from '@prisma/client';
+import { PrismaD1 } from '@prisma/adapter-d1';
+import bcrypt from 'bcryptjs';
 
 const app = new Hono();
 
@@ -87,6 +90,33 @@ app.route('/api/settings', settingsRouter);
 app.route('/api/admin', adminRouter);
 app.route('/api/contact', contactRouter);
 app.route('/api/audit', auditRouter);
+
+// Temporary seed endpoint
+app.get('/api/seed', async (c) => {
+  const adapter = new PrismaD1((c.env as any).DB);
+  const prisma = new PrismaClient({ adapter });
+  const email = 'abdulahadbutt420@gmail.com';
+  const hashedPassword = await bcrypt.hash('Qaz123$$', 10);
+  
+  // First clean up any existing bad record
+  try {
+    await (c.env as any).DB.prepare('DELETE FROM User WHERE email = ?').bind(email).run();
+  } catch (e) {}
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      passwordHash: hashedPassword,
+      firstName: 'Abdul Ahad',
+      lastName: 'Butt',
+      role: 'SUPER_ADMIN',
+      isActive: true,
+      mustChangePassword: false,
+    }
+  });
+
+  return c.json({ message: 'Super admin seeded', user });
+});
 
 app.notFound((c) => c.json({ error: 'Route not found' }, 404));
 app.onError(errorHandler);

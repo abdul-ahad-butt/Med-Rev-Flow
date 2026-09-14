@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma';
 import { createAuditLog } from '../utils/helpers';
+import { v4 as uuidv4 } from 'uuid';
 
 function generatePassword(): string {
   const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$';
@@ -44,16 +45,77 @@ export const listPractices = async (c: Context) => {
 
 export const createPractice = async (c: Context) => {
   const body = await c.req.json();
-  const practice = await prisma.practice.create({
-    data: {
-      name: body.name, legalName: body.legalName, specialty: body.specialty,
-      practiceType: body.practiceType, address: body.address, city: body.city,
-      state: body.state, zipCode: body.zipCode, phone: body.phone,
-      email: body.email, website: body.website, status: body.status || 'ACTIVE',
-    },
-  });
+  
+  const name = body.practiceName || body.name;
+  if (!name) return c.json({ error: 'Practice name is required' }, 400);
+
+  const email = body.ownerEmail?.toLowerCase();
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return c.json({ error: 'Owner email already in use' }, 409);
+  }
+
+  const tempPassword = body.password || generatePassword();
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const practiceId = uuidv4();
+  
+  const practiceData = {
+    id: practiceId,
+    name,
+    taxId: body.taxId || null,
+    npi: body.npi || null,
+    legalName: body.legalName, 
+    specialty: body.specialty,
+    practiceType: body.practiceType, 
+    address: body.address, 
+    city: body.city,
+    state: body.state, 
+    zipCode: body.zipCode, 
+    phone: body.phone,
+    email: body.email, 
+    website: body.website, 
+    status: body.status || 'ACTIVE',
+  };
+
+  const createPracticeQuery = prisma.practice.create({ data: practiceData });
+  const queries: any[] = [createPracticeQuery];
+
+  let ownerData = null;
+  if (email && body.ownerFirstName && body.ownerLastName) {
+    ownerData = {
+      email,
+      passwordHash,
+      firstName: body.ownerFirstName,
+      lastName: body.ownerLastName,
+      practiceId,
+      role: 'PRACTICE_OWNER',
+      mustChangePassword: true,
+      isActive: true,
+    };
+    queries.push(prisma.user.create({ data: ownerData }));
+  }
+
+  const result = await prisma.$transaction(queries);
+  
+  const practice = result[0];
+  const owner = result.length > 1 ? result[1] : null;
+
   await createAuditLog({ userId: c.get('user').userId, action: 'ADMIN_PRACTICE_CREATED', resourceType: 'Practice', resourceId: practice.id, newValues: { name: practice.name } });
-  return c.json({ data: practice }, 201);
+  if (owner) {
+    await createAuditLog({ userId: c.get('user').userId, action: 'ADMIN_PRACTICE_OWNER_CREATED', resourceType: 'User', resourceId: owner.id, newValues: { email: owner.email, practiceId: practice.id } });
+  }
+
+  const responseData: any = { data: practice };
+  if (owner) {
+    responseData.credentials = {
+      email: owner.email,
+      temporaryPassword: tempPassword,
+      note: 'Deliver securely. Not stored in plain text.'
+    };
+  }
+
+  return c.json(responseData, 201);
 };
 
 export const getPractice = async (c: Context) => {
