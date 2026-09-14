@@ -122,7 +122,7 @@ var require_bcrypt = __commonJS({
         (global2["dcodeIO"] = global2["dcodeIO"] || {})["bcrypt"] = factory();
     })(exports, function() {
       "use strict";
-      var bcrypt4 = {};
+      var bcrypt5 = {};
       var randomFallback = null;
       function random(len) {
         if (typeof module !== "undefined" && module && module["exports"])
@@ -148,10 +148,10 @@ var require_bcrypt = __commonJS({
       } catch (e) {
       }
       randomFallback = null;
-      bcrypt4.setRandomFallback = function(random2) {
+      bcrypt5.setRandomFallback = function(random2) {
         randomFallback = random2;
       };
-      bcrypt4.genSaltSync = function(rounds, seed_length) {
+      bcrypt5.genSaltSync = function(rounds, seed_length) {
         rounds = rounds || GENSALT_DEFAULT_LOG2_ROUNDS;
         if (typeof rounds !== "number")
           throw Error("Illegal arguments: " + typeof rounds + ", " + typeof seed_length);
@@ -168,7 +168,7 @@ var require_bcrypt = __commonJS({
         salt.push(base64_encode(random(BCRYPT_SALT_LEN), BCRYPT_SALT_LEN));
         return salt.join("");
       };
-      bcrypt4.genSalt = function(rounds, seed_length, callback) {
+      bcrypt5.genSalt = function(rounds, seed_length, callback) {
         if (typeof seed_length === "function")
           callback = seed_length, seed_length = void 0;
         if (typeof rounds === "function")
@@ -180,7 +180,7 @@ var require_bcrypt = __commonJS({
         function _async(callback2) {
           nextTick(function() {
             try {
-              callback2(null, bcrypt4.genSaltSync(rounds));
+              callback2(null, bcrypt5.genSaltSync(rounds));
             } catch (err2) {
               callback2(err2);
             }
@@ -202,19 +202,19 @@ var require_bcrypt = __commonJS({
             });
           });
       };
-      bcrypt4.hashSync = function(s, salt) {
+      bcrypt5.hashSync = function(s, salt) {
         if (typeof salt === "undefined")
           salt = GENSALT_DEFAULT_LOG2_ROUNDS;
         if (typeof salt === "number")
-          salt = bcrypt4.genSaltSync(salt);
+          salt = bcrypt5.genSaltSync(salt);
         if (typeof s !== "string" || typeof salt !== "string")
           throw Error("Illegal arguments: " + typeof s + ", " + typeof salt);
         return _hash(s, salt);
       };
-      bcrypt4.hash = function(s, salt, callback, progressCallback) {
+      bcrypt5.hash = function(s, salt, callback, progressCallback) {
         function _async(callback2) {
           if (typeof s === "string" && typeof salt === "number")
-            bcrypt4.genSalt(salt, function(err2, salt2) {
+            bcrypt5.genSalt(salt, function(err2, salt2) {
               _hash(s, salt2, callback2, progressCallback);
             });
           else if (typeof s === "string" && typeof salt === "string")
@@ -251,14 +251,14 @@ var require_bcrypt = __commonJS({
         return wrong === 0;
       }
       __name(safeStringCompare, "safeStringCompare");
-      bcrypt4.compareSync = function(s, hash) {
+      bcrypt5.compareSync = function(s, hash) {
         if (typeof s !== "string" || typeof hash !== "string")
           throw Error("Illegal arguments: " + typeof s + ", " + typeof hash);
         if (hash.length !== 60)
           return false;
-        return safeStringCompare(bcrypt4.hashSync(s, hash.substr(0, hash.length - 31)), hash);
+        return safeStringCompare(bcrypt5.hashSync(s, hash.substr(0, hash.length - 31)), hash);
       };
-      bcrypt4.compare = function(s, hash, callback, progressCallback) {
+      bcrypt5.compare = function(s, hash, callback, progressCallback) {
         function _async(callback2) {
           if (typeof s !== "string" || typeof hash !== "string") {
             nextTick(callback2.bind(this, Error("Illegal arguments: " + typeof s + ", " + typeof hash)));
@@ -268,7 +268,7 @@ var require_bcrypt = __commonJS({
             nextTick(callback2.bind(this, null, false));
             return;
           }
-          bcrypt4.hash(s, hash.substr(0, 29), function(err2, comp) {
+          bcrypt5.hash(s, hash.substr(0, 29), function(err2, comp) {
             if (err2)
               callback2(err2);
             else
@@ -291,12 +291,12 @@ var require_bcrypt = __commonJS({
             });
           });
       };
-      bcrypt4.getRounds = function(hash) {
+      bcrypt5.getRounds = function(hash) {
         if (typeof hash !== "string")
           throw Error("Illegal arguments: " + typeof hash);
         return parseInt(hash.split("$")[2], 10);
       };
-      bcrypt4.getSalt = function(hash) {
+      bcrypt5.getSalt = function(hash) {
         if (typeof hash !== "string")
           throw Error("Illegal arguments: " + typeof hash);
         if (hash.length !== 60)
@@ -1933,9 +1933,9 @@ var require_bcrypt = __commonJS({
         }
       }
       __name(_hash, "_hash");
-      bcrypt4.encodeBase64 = base64_encode;
-      bcrypt4.decodeBase64 = base64_decode;
-      return bcrypt4;
+      bcrypt5.encodeBase64 = base64_encode;
+      bcrypt5.decodeBase64 = base64_decode;
+      return bcrypt5;
     });
   }
 });
@@ -8212,8 +8212,8 @@ var require_wasm2 = __commonJS({
     if (typeof globalThis !== "undefined" && globalThis["DEBUG"] || typeof process !== "undefined" && process.env && process.env.DEBUG || void 0) {
       Debug3.enable(typeof globalThis !== "undefined" && globalThis["DEBUG"] || typeof process !== "undefined" && process.env && process.env.DEBUG || void 0);
     }
-    var PrismaClient2 = getPrismaClient2(config2);
-    exports.PrismaClient = PrismaClient2;
+    var PrismaClient3 = getPrismaClient2(config2);
+    exports.PrismaClient = PrismaClient3;
     Object.assign(exports, Prisma);
   }
 });
@@ -18468,6 +18468,78 @@ init_checked_fetch();
 init_strip_cf_connecting_ip_header();
 init_modules_watch_stub();
 var import_bcryptjs3 = __toESM(require_bcrypt());
+
+// node_modules/uuid/dist/esm-browser/index.js
+init_checked_fetch();
+init_strip_cf_connecting_ip_header();
+init_modules_watch_stub();
+
+// node_modules/uuid/dist/esm-browser/rng.js
+init_checked_fetch();
+init_strip_cf_connecting_ip_header();
+init_modules_watch_stub();
+var getRandomValues;
+var rnds8 = new Uint8Array(16);
+function rng() {
+  if (!getRandomValues) {
+    getRandomValues = typeof crypto !== "undefined" && crypto.getRandomValues && crypto.getRandomValues.bind(crypto);
+    if (!getRandomValues) {
+      throw new Error("crypto.getRandomValues() not supported. See https://github.com/uuidjs/uuid#getrandomvalues-not-supported");
+    }
+  }
+  return getRandomValues(rnds8);
+}
+__name(rng, "rng");
+
+// node_modules/uuid/dist/esm-browser/stringify.js
+init_checked_fetch();
+init_strip_cf_connecting_ip_header();
+init_modules_watch_stub();
+var byteToHex = [];
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 256).toString(16).slice(1));
+}
+function unsafeStringify(arr, offset = 0) {
+  return byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + "-" + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + "-" + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + "-" + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + "-" + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]];
+}
+__name(unsafeStringify, "unsafeStringify");
+
+// node_modules/uuid/dist/esm-browser/v4.js
+init_checked_fetch();
+init_strip_cf_connecting_ip_header();
+init_modules_watch_stub();
+
+// node_modules/uuid/dist/esm-browser/native.js
+init_checked_fetch();
+init_strip_cf_connecting_ip_header();
+init_modules_watch_stub();
+var randomUUID = typeof crypto !== "undefined" && crypto.randomUUID && crypto.randomUUID.bind(crypto);
+var native_default = {
+  randomUUID
+};
+
+// node_modules/uuid/dist/esm-browser/v4.js
+function v4(options, buf, offset) {
+  if (native_default.randomUUID && !buf && !options) {
+    return native_default.randomUUID();
+  }
+  options = options || {};
+  const rnds = options.random || (options.rng || rng)();
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset = offset || 0;
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+    return buf;
+  }
+  return unsafeStringify(rnds);
+}
+__name(v4, "v4");
+var v4_default = v4;
+
+// src/controllers/admin.controller.ts
 function generatePassword2() {
   const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$";
   let pass = "";
@@ -18511,24 +18583,67 @@ var listPractices = /* @__PURE__ */ __name(async (c) => {
 }, "listPractices");
 var createPractice = /* @__PURE__ */ __name(async (c) => {
   const body = await c.req.json();
-  const practice = await prisma.practice.create({
-    data: {
-      name: body.name,
-      legalName: body.legalName,
-      specialty: body.specialty,
-      practiceType: body.practiceType,
-      address: body.address,
-      city: body.city,
-      state: body.state,
-      zipCode: body.zipCode,
-      phone: body.phone,
-      email: body.email,
-      website: body.website,
-      status: body.status || "ACTIVE"
-    }
-  });
+  const name2 = body.practiceName || body.name;
+  if (!name2)
+    return c.json({ error: "Practice name is required" }, 400);
+  const email = body.ownerEmail?.toLowerCase();
+  if (email) {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing)
+      return c.json({ error: "Owner email already in use" }, 409);
+  }
+  const tempPassword = body.password || generatePassword2();
+  const passwordHash = await import_bcryptjs3.default.hash(tempPassword, 12);
+  const practiceId = v4_default();
+  const practiceData = {
+    id: practiceId,
+    name: name2,
+    taxId: body.taxId || null,
+    npi: body.npi || null,
+    legalName: body.legalName,
+    specialty: body.specialty,
+    practiceType: body.practiceType,
+    address: body.address,
+    city: body.city,
+    state: body.state,
+    zipCode: body.zipCode,
+    phone: body.phone,
+    email: body.email,
+    website: body.website,
+    status: body.status || "ACTIVE"
+  };
+  const createPracticeQuery = prisma.practice.create({ data: practiceData });
+  const queries = [createPracticeQuery];
+  let ownerData = null;
+  if (email && body.ownerFirstName && body.ownerLastName) {
+    ownerData = {
+      email,
+      passwordHash,
+      firstName: body.ownerFirstName,
+      lastName: body.ownerLastName,
+      practiceId,
+      role: "PRACTICE_OWNER",
+      mustChangePassword: true,
+      isActive: true
+    };
+    queries.push(prisma.user.create({ data: ownerData }));
+  }
+  const result = await prisma.$transaction(queries);
+  const practice = result[0];
+  const owner = result.length > 1 ? result[1] : null;
   await createAuditLog({ userId: c.get("user").userId, action: "ADMIN_PRACTICE_CREATED", resourceType: "Practice", resourceId: practice.id, newValues: { name: practice.name } });
-  return c.json({ data: practice }, 201);
+  if (owner) {
+    await createAuditLog({ userId: c.get("user").userId, action: "ADMIN_PRACTICE_OWNER_CREATED", resourceType: "User", resourceId: owner.id, newValues: { email: owner.email, practiceId: practice.id } });
+  }
+  const responseData = { data: practice };
+  if (owner) {
+    responseData.credentials = {
+      email: owner.email,
+      temporaryPassword: tempPassword,
+      note: "Deliver securely. Not stored in plain text."
+    };
+  }
+  return c.json(responseData, 201);
 }, "createPractice");
 var getPractice = /* @__PURE__ */ __name(async (c) => {
   const { id } = c.req.param();
@@ -18701,6 +18816,8 @@ auditRouter.use("*", authenticate);
 auditRouter.get("/", requirePermission("VIEW_AUDIT_LOG" /* VIEW_AUDIT_LOG */), getAuditLogs);
 
 // src/index.ts
+var import_client2 = __toESM(require_default2());
+var import_bcryptjs4 = __toESM(require_bcrypt());
 BigInt.prototype.toJSON = function() {
   return Number(this);
 };
@@ -18755,6 +18872,28 @@ app.route("/api/settings", settingsRouter);
 app.route("/api/admin", adminRouter);
 app.route("/api/contact", contactRouter);
 app.route("/api/audit", auditRouter);
+app.get("/api/seed", async (c) => {
+  const adapter = new PrismaD1(c.env.DB);
+  const prisma2 = new import_client2.PrismaClient({ adapter });
+  const email = "abdulahadbutt420@gmail.com";
+  const hashedPassword = await import_bcryptjs4.default.hash("Qaz123$$", 10);
+  try {
+    await c.env.DB.prepare("DELETE FROM User WHERE email = ?").bind(email).run();
+  } catch (e) {
+  }
+  const user = await prisma2.user.create({
+    data: {
+      email,
+      passwordHash: hashedPassword,
+      firstName: "Abdul Ahad",
+      lastName: "Butt",
+      role: "SUPER_ADMIN",
+      isActive: true,
+      mustChangePassword: false
+    }
+  });
+  return c.json({ message: "Super admin seeded", user });
+});
 app.notFound((c) => c.json({ error: "Route not found" }, 404));
 app.onError(errorHandler2);
 var src_default = app;
