@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Building2, Users, Activity, TrendingUp } from 'lucide-react';
-import api from '../api/client';
 
 export function DashboardPage() {
   const [stats, setStats] = useState({
