@@ -23,8 +23,8 @@ export function DashboardPage() {
         setStats({
           totalPractices: data.stats.totalPractices,
           totalUsers: data.stats.totalUsers,
-          systemHealth: '100%', // Hardcoded for now unless you have a real uptime endpoint
-          activeSessions: data.stats.totalUsers * 2, // Proxy for sessions
+          systemHealth: data.stats.totalPractices > 0 ? `${Math.round((data.stats.activePractices / data.stats.totalPractices) * 100)}%` : '100%',
+          activeSessions: data.stats.activeSessions, 
         });
         
         if (data.recentActivity) {

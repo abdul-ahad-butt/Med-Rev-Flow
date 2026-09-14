@@ -14,16 +14,9 @@ export function PriorAuthPage() {
 
   const fetchAuths = async () => {
     try {
-      // Simulate fetch since we might not have a specific endpoint, or use generic
-      setTimeout(() => {
-        setAuths([
-          { id: 1, patient: 'Alice Smith', payer: 'Blue Cross', procedure: 'MRI Knee', status: 'Pending', date: '2023-11-01', urgent: true },
-          { id: 2, patient: 'Bob Johnson', payer: 'Aetna', procedure: 'Physical Therapy', status: 'Approved', date: '2023-10-28', urgent: false },
-          { id: 3, patient: 'Charlie Davis', payer: 'Medicare', procedure: 'CT Scan', status: 'Denied', date: '2023-10-25', urgent: false },
-          { id: 4, patient: 'Diana Evans', payer: 'Cigna', procedure: 'Surgery', status: 'Submitted', date: '2023-11-02', urgent: true }
-        ])
-        setLoading(false)
-      }, 800)
+      const res = await api.get('/prior-authorizations').catch(() => ({ data: { data: [] } }))
+      setAuths(res.data?.data || [])
+      setLoading(false)
     } catch (error) {
       console.error(error)
       setLoading(false)
@@ -59,10 +52,10 @@ export function PriorAuthPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <KPICard title="Total Active" value={142} icon={<FileText className="w-5 h-5 text-blue-600" />} />
-        <KPICard title="Pending Approval" value={45} icon={<Clock className="w-5 h-5 text-yellow-600" />} />
-        <KPICard title="Approved (7d)" value={89} icon={<ShieldCheck className="w-5 h-5 text-green-600" />} />
-        <KPICard title="Denied (7d)" value={8} icon={<AlertTriangle className="w-5 h-5 text-red-600" />} />
+        <KPICard title="Total Active" value={0} icon={<FileText className="w-5 h-5 text-blue-600" />} />
+        <KPICard title="Pending Approval" value={0} icon={<Clock className="w-5 h-5 text-yellow-600" />} />
+        <KPICard title="Approved (7d)" value={0} icon={<ShieldCheck className="w-5 h-5 text-green-600" />} />
+        <KPICard title="Denied (7d)" value={0} icon={<AlertTriangle className="w-5 h-5 text-red-600" />} />
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -79,6 +72,9 @@ export function PriorAuthPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
+              {auths.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-slate-500">No prior authorizations found.</td></tr>
+              )}
               {auths.map(auth => (
                 <tr key={auth.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">

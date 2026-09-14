@@ -38,6 +38,7 @@ async function main() {
       city: 'Miami',
       state: 'FL',
       zipCode: '33166',
+      isDemo: true,
     },
   });
   console.log('✅ Practice created');
@@ -54,11 +55,11 @@ async function main() {
   const hashedPassword = await bcrypt.hash('Demo@1234', 12);
   
   const users = await Promise.all([
-    prisma.user.create({ data: { practiceId: practice.id, email: 'owner@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Sarah', lastName: 'Smith', role: 'ADMIN' } }),
-    prisma.user.create({ data: { practiceId: practice.id, email: 'manager@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'David', lastName: 'Johnson', role: 'ADMIN' } }),
-    prisma.user.create({ data: { practiceId: practice.id, email: 'billing@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Maria', lastName: 'Rodriguez', role: 'BILLING' } }),
-    prisma.user.create({ data: { practiceId: practice.id, email: 'frontdesk@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Jennifer', lastName: 'Wilson', role: 'STAFF' } }),
-    prisma.user.create({ data: { practiceId: practice.id, email: 'admin@medrevflow.demo', passwordHash: await bcrypt.hash('admin123', 12), firstName: 'Admin', lastName: 'User', role: 'ADMIN' } }),
+    prisma.user.create({ data: { practiceId: practice.id, email: 'owner@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Sarah', lastName: 'Smith', role: 'ADMIN', isDemo: true } }),
+    prisma.user.create({ data: { practiceId: practice.id, email: 'manager@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'David', lastName: 'Johnson', role: 'ADMIN', isDemo: true } }),
+    prisma.user.create({ data: { practiceId: practice.id, email: 'billing@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Maria', lastName: 'Rodriguez', role: 'BILLING', isDemo: true } }),
+    prisma.user.create({ data: { practiceId: practice.id, email: 'frontdesk@demo.medrevflow.com', passwordHash: hashedPassword, firstName: 'Jennifer', lastName: 'Wilson', role: 'STAFF', isDemo: true } }),
+    prisma.user.create({ data: { practiceId: practice.id, email: 'admin@medrevflow.demo', passwordHash: await bcrypt.hash('admin123', 12), firstName: 'Admin', lastName: 'User', role: 'ADMIN', isDemo: true } }),
     // Real-time Super Admin
     prisma.user.create({ data: { email: 'abdulahadbutt420@gmail.com', passwordHash: await bcrypt.hash('Qaz123$$', 12), firstName: 'Abdul Ahad', lastName: 'Butt', role: 'SUPER_ADMIN' } }),
   ]);

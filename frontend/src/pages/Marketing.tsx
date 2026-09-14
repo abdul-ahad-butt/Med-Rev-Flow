@@ -46,10 +46,10 @@ export function MarketingPage() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICard title="Website Visitors" value={data?.trafficCount || 0} icon={<Globe className="w-5 h-5 text-blue-600" />} trend={12} />
-            <KPICard title="Bounce Rate" value={`${data?.bounceRate || 0}%`} icon={<Activity className="w-5 h-5 text-orange-600" />} trend={-2} />
-            <KPICard title="New Leads" value={145} icon={<Users className="w-5 h-5 text-green-600" />} trend={18} />
-            <KPICard title="Conversion Rate" value="4.2%" icon={<TrendingUp className="w-5 h-5 text-purple-600" />} trend={0.5} />
+            <KPICard title="Website Visitors" value={data?.trafficCount || 0} icon={<Globe className="w-5 h-5 text-blue-600" />} trend={data?.trafficTrend || 0} />
+            <KPICard title="Bounce Rate" value={`${data?.bounceRate || 0}%`} icon={<Activity className="w-5 h-5 text-orange-600" />} trend={data?.bounceTrend || 0} />
+            <KPICard title="New Leads" value={data?.newLeads || 0} icon={<Users className="w-5 h-5 text-green-600" />} trend={data?.leadsTrend || 0} />
+            <KPICard title="Conversion Rate" value={`${data?.conversionRate || 0}%`} icon={<TrendingUp className="w-5 h-5 text-purple-600" />} trend={data?.conversionTrend || 0} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -59,34 +59,26 @@ export function MarketingPage() {
                 <button className="text-blue-600 text-sm font-medium hover:underline">View All</button>
               </div>
               <div className="space-y-4">
-                <div className="p-4 border border-slate-100 rounded-lg bg-slate-50">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium text-slate-800">Google Ads - Orthopedics</h4>
-                      <p className="text-sm text-slate-500">Search Network • $50/day</p>
+                {(!data?.campaigns || data.campaigns.length === 0) ? (
+                  <div className="text-center text-slate-500 py-6">No active campaigns found.</div>
+                ) : (
+                  data.campaigns.map((c: any, i: number) => (
+                    <div key={i} className="p-4 border border-slate-100 rounded-lg bg-slate-50">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium text-slate-800">{c.name}</h4>
+                          <p className="text-sm text-slate-500">{c.type} • {c.budget}</p>
+                        </div>
+                        <span className={`px-2 py-1 ${c.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'} rounded text-xs font-medium`}>{c.status}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mt-3 pt-3 border-t border-slate-200">
+                        <div><span className="text-slate-500">Clicks:</span> <span className="font-medium text-slate-700">{c.clicks}</span></div>
+                        <div><span className="text-slate-500">Cost:</span> <span className="font-medium text-slate-700">{c.cost}</span></div>
+                        <div><span className="text-slate-500">CPA:</span> <span className="font-medium text-slate-700">{c.cpa}</span></div>
+                      </div>
                     </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Active</span>
-                  </div>
-                  <div className="flex justify-between text-sm mt-3 pt-3 border-t border-slate-200">
-                    <div><span className="text-slate-500">Clicks:</span> <span className="font-medium text-slate-700">1,245</span></div>
-                    <div><span className="text-slate-500">Cost:</span> <span className="font-medium text-slate-700">$450</span></div>
-                    <div><span className="text-slate-500">CPA:</span> <span className="font-medium text-slate-700">$32</span></div>
-                  </div>
-                </div>
-                <div className="p-4 border border-slate-100 rounded-lg bg-slate-50">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-medium text-slate-800">Facebook - New Patient Special</h4>
-                      <p className="text-sm text-slate-500">Social • $30/day</p>
-                    </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Active</span>
-                  </div>
-                  <div className="flex justify-between text-sm mt-3 pt-3 border-t border-slate-200">
-                    <div><span className="text-slate-500">Clicks:</span> <span className="font-medium text-slate-700">856</span></div>
-                    <div><span className="text-slate-500">Cost:</span> <span className="font-medium text-slate-700">$210</span></div>
-                    <div><span className="text-slate-500">CPA:</span> <span className="font-medium text-slate-700">$28</span></div>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -106,30 +98,20 @@ export function MarketingPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="py-3 font-medium text-slate-800">pediatrician near me</td>
-                      <td className="py-3 text-slate-600">#3</td>
-                      <td className="py-3 text-slate-600">12,500</td>
-                      <td className="py-3 text-right text-green-600">+2</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-medium text-slate-800">family doctor {data?.practice?.city || 'city'}</td>
-                      <td className="py-3 text-slate-600">#1</td>
-                      <td className="py-3 text-slate-600">4,200</td>
-                      <td className="py-3 text-right text-slate-400">-</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-medium text-slate-800">urgent care clinic</td>
-                      <td className="py-3 text-slate-600">#8</td>
-                      <td className="py-3 text-slate-600">22,000</td>
-                      <td className="py-3 text-right text-red-600">-1</td>
-                    </tr>
-                    <tr>
-                      <td className="py-3 font-medium text-slate-800">best internal medicine</td>
-                      <td className="py-3 text-slate-600">#4</td>
-                      <td className="py-3 text-slate-600">3,100</td>
-                      <td className="py-3 text-right text-green-600">+4</td>
-                    </tr>
+                    {(!data?.keywords || data.keywords.length === 0) ? (
+                      <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No keyword rankings available.</td></tr>
+                    ) : (
+                      data.keywords.map((kw: any, i: number) => (
+                        <tr key={i}>
+                          <td className="py-3 font-medium text-slate-800">{kw.term}</td>
+                          <td className="py-3 text-slate-600">{kw.position}</td>
+                          <td className="py-3 text-slate-600">{kw.volume}</td>
+                          <td className={`py-3 text-right ${kw.trend > 0 ? 'text-green-600' : kw.trend < 0 ? 'text-red-600' : 'text-slate-400'}`}>
+                            {kw.trend > 0 ? `+${kw.trend}` : kw.trend < 0 ? kw.trend : '-'}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

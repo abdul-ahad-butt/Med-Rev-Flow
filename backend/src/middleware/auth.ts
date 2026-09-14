@@ -9,6 +9,7 @@ export interface AuthPayload {
   practiceId: string | null;
   role: UserRole;
   email: string;
+  isDemo: boolean;
 }
 
 export const authenticate = async (
@@ -27,7 +28,7 @@ export const authenticate = async (
     // Verify user still exists and is active
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, isActive: true, practiceId: true, role: true, email: true, practice: { select: { status: true } } },
+      select: { id: true, isActive: true, practiceId: true, role: true, email: true, isDemo: true, practice: { select: { status: true } } },
     });
 
     if (!user || !user.isActive) {
@@ -43,6 +44,7 @@ export const authenticate = async (
       practiceId: user.practiceId,
       role: user.role,
       email: user.email,
+      isDemo: user.isDemo,
     });
 
     await next();

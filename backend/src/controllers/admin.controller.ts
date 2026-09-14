@@ -12,11 +12,13 @@ function generatePassword(): string {
 }
 
 export const getAdminDashboard = async (c: Context) => {
-  const [totalPractices, activePractices, suspendedPractices, totalUsers] = await Promise.all([
-    prisma.practice.count(),
-    prisma.practice.count({ where: { status: 'ACTIVE' } }),
-    prisma.practice.count({ where: { status: 'SUSPENDED' } }),
-    prisma.user.count({ where: { role: { not: 'SUPER_ADMIN' } } }),
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const [totalPractices, activePractices, suspendedPractices, totalUsers, activeSessions] = await Promise.all([
+    prisma.practice.count({ where: { isDemo: false } }),
+    prisma.practice.count({ where: { status: 'ACTIVE', isDemo: false } }),
+    prisma.practice.count({ where: { status: 'SUSPENDED', isDemo: false } }),
+    prisma.user.count({ where: { role: { not: 'SUPER_ADMIN' }, isDemo: false } }),
+    prisma.user.count({ where: { role: { not: 'SUPER_ADMIN' }, isDemo: false, lastLoginAt: { gte: oneDayAgo } } }),
   ]);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const newPracticesThisMonth = await prisma.practice.count({ where: { createdAt: { gte: thirtyDaysAgo } } });
@@ -24,7 +26,7 @@ export const getAdminDashboard = async (c: Context) => {
     take: 10, orderBy: { createdAt: 'desc' },
     include: { user: { select: { firstName: true, lastName: true, email: true } } },
   });
-  return c.json({ stats: { totalPractices, activePractices, suspendedPractices, totalUsers, newPracticesThisMonth }, recentActivity: recentAuditLogs });
+  return c.json({ stats: { totalPractices, activePractices, suspendedPractices, totalUsers, newPracticesThisMonth, activeSessions }, recentActivity: recentAuditLogs });
 };
 
 export const listPractices = async (c: Context) => {
@@ -33,7 +35,7 @@ export const listPractices = async (c: Context) => {
   if (search) where.OR = [{ name: { contains: search } }, { email: { contains: search } }];
   if (status) where.status = status;
   const practices = await prisma.practice.findMany({
-    where,
+    where: { ...where, isDemo: false },
     include: {
       users: { where: { role: 'PRACTICE_OWNER' }, select: { id: true, firstName: true, lastName: true, email: true, lastLoginAt: true, isActive: true } },
       _count: { select: { users: true, patients: true } },
@@ -76,6 +78,7 @@ export const createPractice = async (c: Context) => {
     email: body.email, 
     website: body.website, 
     status: body.status || 'ACTIVE',
+    isDemo: false,
   };
 
   const createPracticeQuery = prisma.practice.create({ data: practiceData });
@@ -92,6 +95,7 @@ export const createPractice = async (c: Context) => {
       role: 'PRACTICE_OWNER',
       mustChangePassword: true,
       isActive: true,
+      isDemo: false,
     };
     queries.push(prisma.user.create({ data: ownerData }));
   }
@@ -162,7 +166,7 @@ export const createPracticeOwner = async (c: Context) => {
   const tempPassword = body.password || generatePassword();
   const passwordHash = await bcrypt.hash(tempPassword, 12);
   const user = await prisma.user.create({
-    data: { email: email.toLowerCase(), passwordHash, firstName, lastName, practiceId, role: 'PRACTICE_OWNER', mustChangePassword: true, isActive: true },
+    data: { email: email.toLowerCase(), passwordHash, firstName, lastName, practiceId, role: 'PRACTICE_OWNER', mustChangePassword: true, isActive: true, isDemo: false },
   });
   await createAuditLog({ userId: c.get('user').userId, action: 'ADMIN_PRACTICE_OWNER_CREATED', resourceType: 'User', resourceId: user.id, newValues: { email: user.email, practiceId } });
   return c.json({
