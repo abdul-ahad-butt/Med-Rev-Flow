@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/auth.store'
 
 export function SettingsPage() {
   const { user: currentUser } = useAuthStore()
-  const [activeTab, setActiveTab] = useState('practice')
+  const [activeTab, setActiveTab] = useState(currentUser?.role === 'PRACTICE_OWNER' ? 'practice' : 'users')
   const [loading, setLoading] = useState(false)
   const [practice, setPractice] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
@@ -209,7 +209,7 @@ export function SettingsPage() {
         <div className="mt-6 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="p-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="text-lg font-semibold text-slate-800">User Management</h3>
-            {currentUser?.role === 'PRACTICE_OWNER' && (
+            {(currentUser?.role === 'PRACTICE_OWNER' || currentUser?.role === 'PRACTICE_MANAGER') && (
               <button 
                 onClick={() => {
                   setNewUser({ firstName: '', lastName: '', email: '', role: 'VIEWER' })
@@ -256,7 +256,7 @@ export function SettingsPage() {
                       {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never'}
                     </td>
                     <td className="px-6 py-4 space-x-3">
-                      {currentUser?.role === 'PRACTICE_OWNER' && user.id !== currentUser?.id && user.role !== 'PRACTICE_OWNER' && (
+                      {(currentUser?.role === 'PRACTICE_OWNER' || currentUser?.role === 'PRACTICE_MANAGER') && user.id !== currentUser?.id && user.role !== 'PRACTICE_OWNER' && (
                         <>
                           <button onClick={() => toggleUserStatus(user.id, user.isActive)} className="text-slate-600 hover:text-blue-600 text-sm font-medium inline-flex items-center gap-1">
                             {user.isActive ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
@@ -403,14 +403,16 @@ export function SettingsPage() {
       </div>
 
       <div className="flex border-b border-slate-200 overflow-x-auto">
-        <button
-          onClick={() => setActiveTab('practice')}
-          className={`flex items-center whitespace-nowrap gap-2 px-6 py-3 border-b-2 text-sm font-medium transition-colors ${
-            activeTab === 'practice' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
-        >
-          <Building2 className="w-4 h-4" /> Practice Profile
-        </button>
+        {currentUser?.role === 'PRACTICE_OWNER' && (
+          <button
+            onClick={() => setActiveTab('practice')}
+            className={`flex items-center whitespace-nowrap gap-2 px-6 py-3 border-b-2 text-sm font-medium transition-colors ${
+              activeTab === 'practice' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+            }`}
+          >
+            <Building2 className="w-4 h-4" /> Practice Profile
+          </button>
+        )}
         <button
           onClick={() => setActiveTab('users')}
           className={`flex items-center whitespace-nowrap gap-2 px-6 py-3 border-b-2 text-sm font-medium transition-colors ${

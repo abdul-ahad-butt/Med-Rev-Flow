@@ -4,6 +4,48 @@ import api from '../api/client';
 import toast from 'react-hot-toast';
 import { OnboardPracticeModal } from '../components/OnboardPracticeModal';
 
+const PracticeActions = ({ practice, onRefresh }: { practice: Practice, onRefresh: () => void }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleStatus = async () => {
+    try {
+      if (practice.status === 'ACTIVE') {
+        if (!window.confirm('Suspend this practice? Users will not be able to log in.')) return;
+        await api.post(`/admin/practices/${practice.id}/suspend`);
+        toast.success('Practice suspended');
+      } else {
+        await api.post(`/admin/practices/${practice.id}/activate`);
+        toast.success('Practice activated');
+      }
+      onRefresh();
+      setIsOpen(false);
+    } catch (error) {
+      toast.error('Failed to update status');
+    }
+  };
+
+  return (
+    <div className="relative inline-block text-left">
+      <button onClick={() => setIsOpen(!isOpen)} className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 focus:outline-none">
+        <MoreVertical className="w-5 h-5" />
+      </button>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-slate-200 z-20 overflow-hidden">
+            <button
+              onClick={toggleStatus}
+              className={`w-full text-left px-4 py-2 text-sm font-medium ${practice.status === 'ACTIVE' ? 'text-amber-600 hover:bg-amber-50' : 'text-green-600 hover:bg-green-50'}`}
+            >
+              {practice.status === 'ACTIVE' ? 'Suspend Practice' : 'Activate Practice'}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface Practice {
   id: string;
   name: string;
@@ -111,7 +153,7 @@ export function PracticesPage() {
                       {practice.npi || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${practice.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                         {practice.status}
                       </span>
                     </td>
@@ -119,9 +161,7 @@ export function PracticesPage() {
                       {new Date(practice.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button className="text-slate-400 hover:text-slate-600">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
+                      <PracticeActions practice={practice} onRefresh={fetchPractices} />
                     </td>
                   </tr>
                 ))

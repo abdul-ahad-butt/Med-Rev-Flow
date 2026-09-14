@@ -10,12 +10,11 @@ import {
 
 export const settingsRouter = new Hono();
 settingsRouter.use('*', authenticate);
-settingsRouter.use('*', requirePermission(Permission.MANAGE_PRACTICE_SETTINGS));
 
-settingsRouter.get('/practice', getPracticeSettings);
-settingsRouter.patch('/practice', requirePermission(Permission.MANAGE_USERS), updatePracticeSettings);
+settingsRouter.get('/practice', requirePermission(Permission.MANAGE_PRACTICE_SETTINGS), getPracticeSettings);
+settingsRouter.patch('/practice', requirePermission(Permission.MANAGE_PRACTICE_SETTINGS), updatePracticeSettings);
 
-settingsRouter.get('/users', getUsers);
+settingsRouter.get('/users', requirePermission(Permission.MANAGE_USERS), getUsers);
 settingsRouter.patch('/users/:id', updateUser);
 settingsRouter.post('/users', requirePermission(Permission.MANAGE_USERS), createPracticeUser);
 settingsRouter.post('/users/:id/deactivate', requirePermission(Permission.MANAGE_USERS), deactivatePracticeUser);

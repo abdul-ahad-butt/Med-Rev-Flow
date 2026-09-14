@@ -27,11 +27,15 @@ export const authenticate = async (
     // Verify user still exists and is active
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, isActive: true, practiceId: true, role: true, email: true },
+      select: { id: true, isActive: true, practiceId: true, role: true, email: true, practice: { select: { status: true } } },
     });
 
     if (!user || !user.isActive) {
       return c.json({ error: 'User not found or inactive' }, 401);
+    }
+
+    if (user.role !== 'SUPER_ADMIN' && user.practice && user.practice.status === 'SUSPENDED') {
+      return c.json({ error: 'Your practice account has been suspended. Please contact support.' }, 403);
     }
 
     c.set('user', {

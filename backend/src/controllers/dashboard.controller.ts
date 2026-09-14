@@ -50,8 +50,8 @@ export const getDashboard = async (c: Context) => {
         where: {
           provider: { practiceId },
           startTime: {
-            gte: new Date(now.setHours(0, 0, 0, 0)),
-            lt: new Date(now.setHours(23, 59, 59, 999)),
+            gte: new Date(new Date().setHours(0, 0, 0, 0)),
+            lt: new Date(new Date().setHours(23, 59, 59, 999)),
           },
         },
       }),
@@ -75,7 +75,7 @@ export const getDashboard = async (c: Context) => {
       prisma.denial.groupBy({
         by: ['denialReason'],
         where: { claim: { provider: { practiceId } } },
-        _count: true,
+        _count: { denialReason: true },
         _sum: { deniedAmount: true },
         orderBy: { _count: { denialReason: 'desc' } },
         take: 6,
@@ -127,7 +127,7 @@ export const getDashboard = async (c: Context) => {
       .sort((a, b) => a.month.localeCompare(b.month));
 
     // Calculate A/R
-    const outstandingAR = Math.max(0, Number(outstandingARResult._sum.billedAmount || 0) - Number(outstandingARResult._sum.paidAmount || 0));
+    const outstandingAR = Math.max(0, Number(outstandingARResult?._sum?.billedAmount || 0) - Number(outstandingARResult?._sum?.paidAmount || 0));
     
     // Mock AR buckets based on total A/R for visual purposes
     const arBuckets = [
@@ -143,8 +143,8 @@ export const getDashboard = async (c: Context) => {
       _sum: { deniedAmount: true, recoveredAmount: true },
     });
 
-    const deniedTotal = Number(denialAgg._sum.deniedAmount || 0);
-    const recoveredTotal = Number(denialAgg._sum.recoveredAmount || 0);
+    const deniedTotal = Number(denialAgg?._sum?.deniedAmount || 0);
+    const recoveredTotal = Number(denialAgg?._sum?.recoveredAmount || 0);
     const recoveryOpportunity = deniedTotal - recoveredTotal;
 
     // Collection rate = payments / (billedAmount of paid claims)
@@ -152,7 +152,7 @@ export const getDashboard = async (c: Context) => {
       where: { provider: { practiceId }, status: { in: ['PAID', 'CLOSED'] } },
       _sum: { billedAmount: true, paidAmount: true },
     });
-    const collectionRate = billedAgg._sum.billedAmount
+    const collectionRate = billedAgg?._sum?.billedAmount
       ? (Number(billedAgg._sum.paidAmount || 0) / Number(billedAgg._sum.billedAmount)) * 100
       : 0;
 
@@ -164,7 +164,7 @@ export const getDashboard = async (c: Context) => {
 
     return c.json({
       kpis: {
-        totalRevenue: Number(totalRevenueResult._sum.amount || 0),
+        totalRevenue: Number(totalRevenueResult?._sum?.amount || 0),
         monthlyRevenue: monthlyRevenue.length > 0 ? monthlyRevenue[monthlyRevenue.length - 1].revenue : 0,
         totalClaims,
         openDenials: deniedClaimsCount,
@@ -196,7 +196,7 @@ export const getDashboard = async (c: Context) => {
       })),
       denialsByReason: denialsByReason.map(d => ({
         reason: d.denialReason, denialDate: new Date(),
-        count: d._count,
+        count: d._count.denialReason,
         amount: Number(d._sum.deniedAmount || 0),
       })),
       revenueByMonth: monthlyRevenue,
