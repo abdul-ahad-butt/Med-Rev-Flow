@@ -150,9 +150,9 @@ export function PatientDetailPage() {
                   return (
                     <div key={apt.id as string} className="p-4 flex items-center justify-between hover:bg-slate-50">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{formatDate(apt.startTime != null ? (apt.startTime as string) : '')}</p>
+                        <p className="text-sm font-medium text-slate-900">{formatDate(apt?.startTime != null ? (apt.startTime as string) : '')}</p>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          {apt.appointmentType as string} with Dr. {(apt.provider as { lastName: string })?.lastName}
+                          {apt?.appointmentType as string} with Dr. {(apt?.provider as { lastName: string })?.lastName}
                         </p>
                       </div>
                       <StatusBadge status={apt.status as string} />
