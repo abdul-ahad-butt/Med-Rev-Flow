@@ -21,9 +21,13 @@ export const getAdminDashboard = async (c: Context) => {
     prisma.user.count({ where: { role: { not: 'SUPER_ADMIN' }, isDemo: false, lastLoginAt: { gte: oneDayAgo } } }),
   ]);
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const newPracticesThisMonth = await prisma.practice.count({ where: { createdAt: { gte: thirtyDaysAgo } } });
+  // Exclude demo practices from month-over-month count
+  const newPracticesThisMonth = await prisma.practice.count({ where: { isDemo: false, createdAt: { gte: thirtyDaysAgo } } });
+  // Exclude audit log entries authored by demo users — filter at DB level, not in JS
   const recentAuditLogs = await prisma.auditLog.findMany({
-    take: 10, orderBy: { createdAt: 'desc' },
+    take: 10,
+    orderBy: { createdAt: 'desc' },
+    where: { user: { isDemo: false } },
     include: { user: { select: { firstName: true, lastName: true, email: true } } },
   });
   return c.json({ stats: { totalPractices, activePractices, suspendedPractices, totalUsers, newPracticesThisMonth, activeSessions }, recentActivity: recentAuditLogs });
@@ -177,7 +181,8 @@ export const createPracticeOwner = async (c: Context) => {
 
 export const listPracticeOwners = async (c: Context) => {
   const owners = await prisma.user.findMany({
-    where: { role: 'PRACTICE_OWNER' },
+    // Exclude demo practice owners from the Super Admin user list
+    where: { role: 'PRACTICE_OWNER', isDemo: false },
     select: { id: true, firstName: true, lastName: true, email: true, isActive: true, lastLoginAt: true, createdAt: true, practice: { select: { id: true, name: true, status: true } } },
     orderBy: { createdAt: 'desc' },
   });
@@ -198,12 +203,17 @@ export const adminResetPassword = async (c: Context) => {
 export const getAdminAuditLogs = async (c: Context) => {
   const { page = '1', limit = '50' } = c.req.query();
   const skip = (parseInt(page) - 1) * parseInt(limit);
+  // Only surface audit logs created by REAL (non-demo) users — demo activity stays invisible to Super Admin
+  const demoExclude = { user: { isDemo: false } };
   const [logs, total] = await Promise.all([
     prisma.auditLog.findMany({
-      skip, take: parseInt(limit), orderBy: { createdAt: 'desc' },
+      where: demoExclude,
+      skip,
+      take: parseInt(limit),
+      orderBy: { createdAt: 'desc' },
       include: { user: { select: { firstName: true, lastName: true, email: true, role: true, practice: { select: { name: true } } } } },
     }),
-    prisma.auditLog.count(),
+    prisma.auditLog.count({ where: demoExclude }),
   ]);
   return c.json({ data: logs, total, page: parseInt(page), limit: parseInt(limit) });
 };
