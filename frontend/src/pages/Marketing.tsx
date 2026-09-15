@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Search, Filter, TrendingUp, Users, Activity, Globe, Plus, AlertCircle, RefreshCw } from 'lucide-react'
+import { Search, Filter, TrendingUp, Users, Activity, Globe, AlertCircle, RefreshCw } from 'lucide-react'
 import api from '../api/client'
 import { KPICard } from '../components/ui/KPICard'
 import { SkeletonKPIs } from '../components/ui/Skeleton'
-import toast from 'react-hot-toast'
 
 export function MarketingPage() {
   const [data, setData] = useState<any>(null)

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Search, Filter, Phone, Mail, MoreHorizontal, User, Calendar, ExternalLink, X, AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
 import api from '../api/client'
 import { KPICard } from '../components/ui/KPICard'
-import { Badge } from '../components/ui/Badge'
+import { StatusBadge } from '../components/ui/Badge'
 import { SkeletonLine } from '../components/ui/Skeleton'
 import toast from 'react-hot-toast'
 
@@ -92,14 +92,7 @@ export function LeadsPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'NEW': return <Badge variant="error">New</Badge>
-      case 'CONTACTED': return <Badge variant="warning">Contacted</Badge>
-      case 'QUALIFIED': return <Badge variant="success">Qualified</Badge>
-      case 'CONVERTED': return <Badge variant="success">Converted</Badge>
-      case 'CLOSED': return <Badge variant="neutral">Closed</Badge>
-      default: return <Badge variant="neutral">{status}</Badge>
-    }
+    return <StatusBadge status={status} />
   }
 
   const filteredLeads = leads.filter(l =>

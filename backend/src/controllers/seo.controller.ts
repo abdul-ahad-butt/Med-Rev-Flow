@@ -19,7 +19,7 @@ export const getSEODashboard = async (c: Context) => {
       }),
     ]);
 
-    const newLeads = leadsBySource.reduce((acc, curr) => acc + curr._count, 0);
+    const newLeads = leadsBySource.reduce((acc: number, curr: { _count: number }) => acc + curr._count, 0);
 
     return c.json({
       campaigns,

@@ -1,8 +1,9 @@
 -- Migration: 0003_add_marketing_tables.sql
 -- Adds Campaign and SeoKeyword tables for the Marketing & SEO module.
+-- Applied to production D1 on 2026-09-15 via: wrangler d1 execute --remote
 
 -- CreateTable Campaign
-CREATE TABLE IF NOT EXISTS "Campaign" (
+CREATE TABLE "Campaign" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "practiceId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "Campaign" (
 );
 
 -- CreateTable SeoKeyword
-CREATE TABLE IF NOT EXISTS "SeoKeyword" (
+CREATE TABLE "SeoKeyword" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "practiceId" TEXT NOT NULL,
     "term" TEXT NOT NULL,
@@ -31,5 +32,5 @@ CREATE TABLE IF NOT EXISTS "SeoKeyword" (
 );
 
 -- CreateIndex
-CREATE INDEX IF NOT EXISTS "Campaign_practiceId_idx" ON "Campaign"("practiceId");
-CREATE INDEX IF NOT EXISTS "SeoKeyword_practiceId_idx" ON "SeoKeyword"("practiceId");
+CREATE INDEX "Campaign_practiceId_idx" ON "Campaign"("practiceId");
+CREATE INDEX "SeoKeyword_practiceId_idx" ON "SeoKeyword"("practiceId");
