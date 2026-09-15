@@ -1,4 +1,4 @@
-import { hasPermission, Permission } from './config/permissions';
+import { hasPermission, Permission, getDefaultRouteForRole } from './config/permissions';
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth.store'
 import { AppLayout } from './layouts/AppLayout'
@@ -31,7 +31,7 @@ function RoleRoute({ permission, children }: { permission: Permission; children:
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
   if (!hasPermission(user.role, permission)) {
-    return <Navigate to="/app/dashboard" replace />;
+    return <Navigate to={getDefaultRouteForRole(user.role)} replace />;
   }
   return <>{children}</>;
 }
@@ -41,6 +41,11 @@ function ProtectedRoute({ children, allowPasswordChange = false }: { children: R
   if (!token) return <Navigate to="/login" replace />
   if (user?.mustChangePassword && !allowPasswordChange) return <Navigate to="/change-password" replace />
   return <>{children}</>
+}
+
+function RootRedirect() {
+  const { user } = useAuthStore();
+  return <Navigate to={getDefaultRouteForRole(user?.role)} replace />;
 }
 
 export default function App() {
@@ -57,7 +62,7 @@ export default function App() {
           <AppLayout />
         </ProtectedRoute>
       }>
-        <Route index element={<Navigate to="/app/dashboard" replace />} />
+        <Route index element={<RootRedirect />} />
         <Route path="dashboard" element={<RoleRoute permission={Permission.VIEW_DASHBOARD}><DashboardPage /></RoleRoute>} />
         <Route path="revenue-cycle" element={<RoleRoute permission={Permission.VIEW_CLAIMS}><RevenueCyclePage /></RoleRoute>} />
         <Route path="claims" element={<RoleRoute permission={Permission.VIEW_CLAIMS}><ClaimsPage /></RoleRoute>} />

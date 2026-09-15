@@ -116,3 +116,20 @@ export function hasPermission(userRole: string | undefined, permission: Permissi
   const role = userRole as UserRole;
   return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
 }
+
+export function getDefaultRouteForRole(userRole: string | undefined): string {
+  switch (userRole) {
+    case 'MARKETING_MANAGER':
+      return '/app/marketing';
+    case 'FRONT_DESK':
+      return '/app/appointments';
+    case 'BILLING_STAFF':
+      return '/app/claims'; // Billing staff mostly deal with claims/denials
+    case 'SUPER_ADMIN':
+    case 'PRACTICE_OWNER':
+    case 'PRACTICE_MANAGER':
+    case 'VIEWER':
+    default:
+      return '/app/dashboard';
+  }
+}

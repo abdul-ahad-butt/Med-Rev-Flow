@@ -4,6 +4,7 @@ import { useAuthStore } from '../../store/auth.store';
 import api from '../../api/client';
 import toast from 'react-hot-toast';
 import { Lock, Eye, EyeOff, Shield } from 'lucide-react';
+import { getDefaultRouteForRole } from '../../config/permissions';
 
 export default function ChangePassword() {
   const { user, setUser } = useAuthStore();
@@ -30,7 +31,7 @@ export default function ChangePassword() {
       await api.post('/auth/change-password', { currentPassword, newPassword });
       toast.success('Password changed successfully!');
       if (user) setUser({ ...user, mustChangePassword: false });
-      navigate('/app/dashboard');
+      navigate(getDefaultRouteForRole(user?.role));
     } catch (err: any) {
       toast.error(err?.response?.data?.error || 'Failed to change password');
     } finally {

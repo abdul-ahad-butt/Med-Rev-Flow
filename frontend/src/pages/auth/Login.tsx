@@ -7,6 +7,7 @@ import { Activity, Eye, EyeOff, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../../api/client'
 import { useAuthStore } from '../../store/auth.store'
+import { getDefaultRouteForRole } from '../../config/permissions'
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -40,7 +41,7 @@ export function LoginPage() {
       if (user.mustChangePassword) {
         navigate('/change-password');
       } else {
-        navigate('/app/dashboard');
+        navigate(getDefaultRouteForRole(user.role));
       }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
