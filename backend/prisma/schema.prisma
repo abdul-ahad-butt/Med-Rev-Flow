@@ -40,6 +40,8 @@ model Practice {
   tasks        Task[]
   messages     Message[]
   priorAuths   PriorAuthorization[]
+  campaigns    Campaign[]
+  seoKeywords  SeoKeyword[]
 }
 
 model User {
@@ -431,4 +433,37 @@ model PracticeSetting {
   practice        Practice @relation(fields: [practiceId], references: [id])
 
   @@unique([practiceId, key])
+}
+
+model Campaign {
+  id              String   @id @default(uuid())
+  practiceId      String
+  name            String
+  type            String
+  status          String   @default("Active")
+  budget          String
+  clicks          Int      @default(0)
+  cost            String
+  cpa             String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  practice        Practice @relation(fields: [practiceId], references: [id])
+
+  @@index([practiceId])
+}
+
+model SeoKeyword {
+  id              String   @id @default(uuid())
+  practiceId      String
+  term            String
+  position        Int
+  volume          String
+  trend           Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  practice        Practice @relation(fields: [practiceId], references: [id])
+
+  @@index([practiceId])
 }
