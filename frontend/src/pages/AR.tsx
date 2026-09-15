@@ -23,7 +23,7 @@ export function ARPage() {
     try {
       const [dataRes, statsRes] = await Promise.all([
         api.get('/ar', { params: { page, limit: 20, search } }),
-        page === 1 ? api.get('/ar/summary') : Promise.resolve(null),
+        page === 1 ? api.get('/ar/stats') : Promise.resolve(null),
       ])
       setData(dataRes.data)
       if (statsRes) setStats(statsRes.data)
@@ -57,9 +57,9 @@ export function ARPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="grid grid-cols-2 gap-4">
             <KPICard title="Total Outstanding A/R" value={Number(stats.totalAR || 0)} format="currency" colorClass="bg-blue-50" />
-            <KPICard title="0-30 Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '0-30') as { _sum: { balance: number } })?._sum?.balance || 0)} format="currency" colorClass="bg-green-50" />
-            <KPICard title="31-60 Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '31-60') as { _sum: { balance: number } })?._sum?.balance || 0)} format="currency" colorClass="bg-yellow-50" />
-            <KPICard title="90+ Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '90+') as { _sum: { balance: number } })?._sum?.balance || 0)} format="currency" colorClass="bg-red-50" />
+            <KPICard title="0-30 Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '0-30') as { balance: number })?.balance || 0)} format="currency" colorClass="bg-green-50" />
+            <KPICard title="31-60 Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '31-60') as { balance: number })?.balance || 0)} format="currency" colorClass="bg-yellow-50" />
+            <KPICard title="90+ Days" value={Number((buckets.find((b: unknown) => (b as { agingBucket: string }).agingBucket === '90+') as { balance: number })?.balance || 0)} format="currency" colorClass="bg-red-50" />
           </div>
           <div className="section-card">
             <div className="section-card-header">
@@ -72,7 +72,7 @@ export function ARPage() {
                   <XAxis dataKey="agingBucket" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(v: number) => [formatCurrency(v), 'Balance']} cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: 8 }} />
-                  <Bar dataKey="_sum.balance" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                  <Bar dataKey="balance" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

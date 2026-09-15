@@ -14,11 +14,14 @@ export function MessagesPage() {
 
   const fetchConversations = async () => {
     try {
+      // GET /api/messages returns { data: Message[], total, page, limit }
       const res = await api.get('/messages')
-      setConversations(res.data.data)
-      if (res.data.data.length > 0) setActiveThread(res.data.data[0].id)
+      const messages = Array.isArray(res.data?.data) ? res.data.data : []
+      setConversations(messages)
+      if (messages.length > 0) setActiveThread(messages[0].id)
     } catch (error) {
-      console.error(error)
+      console.error('Failed to load messages:', error)
+      setConversations([])
     } finally {
       setLoading(false)
     }
@@ -62,7 +65,7 @@ export function MessagesPage() {
                     <User className="w-3 h-3" />
                     <span>{conv.patient ? `${conv.patient.firstName} ${conv.patient.lastName}` : 'System'}</span>
                   </div>
-                  <p className="text-sm text-slate-500 truncate">{conv.messages?.[0]?.body || 'No messages'}</p>
+                  <p className="text-sm text-slate-500 truncate">{conv.content || 'No messages'}</p>
                 </div>
               ))}
             </div>

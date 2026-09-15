@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react'
-import { Plus, Search, Filter, Shield } from 'lucide-react'
+import { Plus, Search, Shield } from 'lucide-react'
 import api from '../api/client'
-import { SkeletonTable } from '../components/ui/Skeleton'
+import { SkeletonTable, ErrorState } from '../components/ui/Skeleton'
 
 export function InsurancePage() {
   const [insurances, setInsurances] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchInsurances()
   }, [])
 
   const fetchInsurances = async () => {
+    setLoading(true); setError('')
     try {
       const res = await api.get('/insurance')
-      setInsurances(res.data.data)
-    } catch (error) {
-      console.error(error)
+      // Guard: API may return null/undefined data on error
+      setInsurances(Array.isArray(res.data?.data) ? res.data.data : [])
+    } catch (err: any) {
+      setError(err?.response?.data?.error || 'Failed to load insurance payers')
+      setInsurances([])
     } finally {
       setLoading(false)
     }
@@ -41,7 +45,7 @@ export function InsurancePage() {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        {loading ? <SkeletonTable rows={5} /> : (
+        {loading ? <SkeletonTable rows={5} /> : error ? <ErrorState message={error} onRetry={fetchInsurances} /> : (
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
               <tr>
@@ -68,7 +72,7 @@ export function InsurancePage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-slate-600">
-                    {ins.timelyFilingDays} days
+                    {ins.timelyFilingDays ?? 0} days
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Edit</button>

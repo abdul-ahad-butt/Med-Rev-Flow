@@ -140,17 +140,18 @@ model Appointment {
 }
 
 model Insurance {
-  id             String   @id @default(uuid())
-  practiceId     String?
-  name           String
-  payerId        String?
-  address        String?
-  city           String?
-  state          String?
-  zipCode        String?
-  phone          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String   @id @default(uuid())
+  practiceId        String?
+  name              String
+  payerId           String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  phone             String?
+  timelyFilingDays  Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   practice       Practice? @relation(fields: [practiceId], references: [id])
   claims         Claim[]

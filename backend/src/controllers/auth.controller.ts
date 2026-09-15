@@ -2,7 +2,7 @@ import { Context } from 'hono';
 import bcrypt from 'bcryptjs';
 import { sign } from 'hono/jwt';
 import { prisma } from '../config/prisma';
-import { config } from '../config/env';
+import { getJwtSecret } from '../config/env';
 import { createAuditLog } from '../utils/helpers';
 import { z } from 'zod';
 
@@ -22,7 +22,7 @@ export const login = async (c: Context) => {
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
-      include: { practice: { select: { id: true, name: true, status: true } } },
+      include: { practice: { select: { id: true, name: true, status: true, isDemo: true } } },
     });
 
     if (!user || !user.isActive) {
@@ -52,7 +52,8 @@ export const login = async (c: Context) => {
       practiceId: user.practiceId,
       role: user.role,
       email: user.email,
-    }, config.jwtSecret, 'HS256');
+      isDemo: user.isDemo,
+    }, getJwtSecret(), 'HS256');
 
     await createAuditLog({
       userId: user.id, action: 'LOGIN', resourceType: 'User', resourceId: user.id,
@@ -70,6 +71,9 @@ export const login = async (c: Context) => {
         practiceId: user.practiceId,
         practiceName: user.practice?.name,
         mustChangePassword: user.mustChangePassword,
+        // isDemo is determined by backend — frontend cannot spoof this
+        isDemo: user.isDemo,
+        practiceIsDemo: user.practice?.isDemo ?? false,
       },
     });
   } catch (error) { throw error; }

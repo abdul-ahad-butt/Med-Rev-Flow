@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, FileText, Activity } from 'lucide-react'
+import { ArrowLeft, User, Phone, Mail, MapPin, Calendar, FileText } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { StatusBadge } from '../components/ui/Badge'
 import { SkeletonCard, ErrorState } from '../components/ui/Skeleton'
@@ -150,7 +150,7 @@ export function PatientDetailPage() {
                   return (
                     <div key={apt.id as string} className="p-4 flex items-center justify-between hover:bg-slate-50">
                       <div>
-                        <p className="text-sm font-medium text-slate-900">{formatDate(apt.startTime as string)}</p>
+                        <p className="text-sm font-medium text-slate-900">{formatDate(apt.startTime != null ? (apt.startTime as string) : '')}</p>
                         <p className="text-xs text-slate-500 mt-0.5">
                           {apt.appointmentType as string} with Dr. {(apt.provider as { lastName: string })?.lastName}
                         </p>

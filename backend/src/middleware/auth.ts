@@ -1,6 +1,6 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
-import { config } from '../config/env';
+import { getJwtSecret } from '../config/env';
 import { prisma } from '../config/prisma';
 import { UserRole, Permission, hasPermission } from './permissions';
 
@@ -23,7 +23,7 @@ export const authenticate = async (
     }
 
     const token = authHeader.substring(7);
-    const payload = await verify(token, config.jwtSecret, 'HS256') as unknown as AuthPayload;
+    const payload = await verify(token, getJwtSecret(), 'HS256') as unknown as AuthPayload;
 
     // Verify user still exists and is active
     const user = await prisma.user.findUnique({
