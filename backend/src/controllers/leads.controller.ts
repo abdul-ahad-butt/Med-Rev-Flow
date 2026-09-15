@@ -14,10 +14,10 @@ export const getLeads = async (c: Context) => {
     if (source) where.source = source;
     if (search) {
       where.OR = [
-        { firstName: { contains: search, mode: 'insensitive' } },
-        { lastName: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { firstName: { contains: search } },
+        { lastName: { contains: search } },
+        { phone: { contains: search } },
+        { email: { contains: search } },
       ];
     }
     const [leads, total] = await Promise.all([
@@ -57,9 +57,17 @@ export const getLead = async (c: Context) => {
 export const createLead = async (c: Context) => {
   try {
     const { practiceId } = c.get('user')!;
-    const lead = await prisma.lead.create({ data: { ...(await c.req.json() as any), practiceId } });
+    const body = await c.req.json() as Record<string, unknown>;
+    // Strip any practiceId the frontend may have sent — always use the authenticated user's
+    const { practiceId: _ignored, id: _id, createdAt: _ca, updatedAt: _ua, ...safeBody } = body;
+    const lead = await prisma.lead.create({
+      data: { ...safeBody, practiceId, updatedAt: new Date() } as any,
+    });
     return c.json({ data: lead }, 201);
-  } catch (error) { throw error; }
+  } catch (error) {
+    console.error('[leads.controller] createLead error:', error);
+    throw error;
+  }
 };
 
 export const updateLead = async (c: Context) => {
