@@ -1,111 +1,189 @@
 import { Context } from 'hono';
 import { prisma } from '../config/prisma';
 
-/**
- * GET /api/messages
- *
- * Returns messages (as a thread list) for the authenticated user's practice.
- * Messages are ordered by most recent first.
- */
-export const getMessageList = async (c: Context) => {
+export const getConversations = async (c: Context) => {
   try {
     const authUser = c.get('user');
     if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
 
-    const { page = '1', limit = '50' } = c.req.query();
-    const pageNum  = Math.max(1, parseInt(page));
-    const limitNum = Math.min(100, parseInt(limit));
-
-    // Build where clause — users see messages where they are sender or receiver
-    // and scoped to their practice
-    const where: Record<string, unknown> = {
-      OR: [
-        { senderId:   authUser.userId },
-        { receiverId: authUser.userId },
-      ],
-    };
-    if (authUser.practiceId) {
-      where.practiceId = authUser.practiceId;
-    }
-
-    const [total, messages] = await Promise.all([
-      prisma.message.count({ where }),
-      prisma.message.findMany({
-        where,
-        skip:    (pageNum - 1) * limitNum,
-        take:    limitNum,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          sender:   { select: { id: true, firstName: true, lastName: true, role: true } },
-          receiver: { select: { id: true, firstName: true, lastName: true, role: true } },
-        },
-      }),
-    ]);
-
-    return c.json({
-      data:  messages,
-      total,
-      page:  pageNum,
-      limit: limitNum,
+    const conversations = await prisma.conversation.findMany({
+      where: {
+        practiceId: authUser.practiceId,
+        OR: [
+          { participantAId: authUser.userId },
+          { participantBId: authUser.userId },
+        ],
+      },
+      include: {
+        participantA: { select: { id: true, firstName: true, lastName: true, role: true } },
+        participantB: { select: { id: true, firstName: true, lastName: true, role: true } },
+      },
+      orderBy: { lastMessageAt: 'desc' },
     });
+
+    return c.json({ data: conversations });
   } catch (error) { throw error; }
 };
 
-/**
- * POST /api/messages
- * Send a new message within the practice.
- */
-export const sendDirectMessage = async (c: Context) => {
+export const getMessages = async (c: Context) => {
   try {
     const authUser = c.get('user');
     if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
 
-    const body = await c.req.json();
-    if (!body.receiverId || !body.content) {
-      return c.json({ error: 'receiverId and content are required' }, 400);
+    const conversationId = c.req.param('id') as string;
+    const { page = '1', limit = '50' } = c.req.query();
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, parseInt(limit));
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation || conversation.practiceId !== authUser.practiceId) {
+      return c.json({ error: 'Conversation not found' }, 404);
     }
 
-    const message = await prisma.message.create({
+    if (conversation.participantAId !== authUser.userId && conversation.participantBId !== authUser.userId) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    const messages = await prisma.conversationMessage.findMany({
+      where: { conversationId },
+      orderBy: { createdAt: 'desc' },
+      skip: (pageNum - 1) * limitNum,
+      take: limitNum,
+      include: {
+        sender: { select: { id: true, firstName: true, lastName: true, role: true } },
+      }
+    });
+
+    return c.json({ data: messages.reverse() });
+  } catch (error) { throw error; }
+};
+
+export const sendMessage = async (c: Context) => {
+  try {
+    const authUser = c.get('user');
+    if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
+
+    const conversationId = c.req.param('id') as string;
+    const { body } = await c.req.json();
+
+    if (!body || typeof body !== 'string') {
+      return c.json({ error: 'Message body required' }, 400);
+    }
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation || conversation.practiceId !== authUser.practiceId) {
+      return c.json({ error: 'Conversation not found' }, 404);
+    }
+
+    if (conversation.participantAId !== authUser.userId && conversation.participantBId !== authUser.userId) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    const message = await prisma.conversationMessage.create({
       data: {
-        senderId:   authUser.userId,
-        receiverId: body.receiverId,
-        content:    body.content,
-        subject:    body.subject,
-        practiceId: authUser.practiceId,
-        priority:   body.priority || 'MEDIUM',
+        conversationId,
+        senderId: authUser.userId,
+        body,
       },
       include: {
-        sender:   { select: { id: true, firstName: true, lastName: true } },
-        receiver: { select: { id: true, firstName: true, lastName: true } },
-      },
+        sender: { select: { id: true, firstName: true, lastName: true, role: true } }
+      }
+    });
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { lastMessageAt: new Date() },
     });
 
     return c.json({ data: message }, 201);
   } catch (error) { throw error; }
 };
 
-// --- Legacy /conversations routes kept for backward compatibility ---
-
-export const getConversations = async (c: Context) => {
+export const wsHandler = async (c: Context) => {
   try {
-    return c.json({ data: [] });
+    const authUser = c.get('user');
+    if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
+
+    const conversationId = c.req.param('id') as string;
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation || conversation.practiceId !== authUser.practiceId) {
+      return c.json({ error: 'Conversation not found' }, 404);
+    }
+    if (conversation.participantAId !== authUser.userId && conversation.participantBId !== authUser.userId) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    // Connect to Durable Object
+    const id = c.env.CONVERSATION_ROOM.idFromName(conversationId);
+    const room = c.env.CONVERSATION_ROOM.get(id);
+
+    // Forward the WebSocket upgrade request to the DO
+    return room.fetch(c.req.raw);
   } catch (error) { throw error; }
 };
 
-export const createConversation = async (c: Context) => {
+// Removed getMessageList, sendDirectMessage, createConversation since they're no longer used
+
+export const getUnreadCount = async (c: Context) => {
   try {
-    return c.json({ data: { id: 'temp-conv-id', name: (await c.req.json()).name, members: [] } }, 201);
+    const authUser = c.get('user');
+    if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
+
+    const count = await prisma.conversationMessage.count({
+      where: {
+        readAt: null,
+        senderId: { not: authUser.userId },
+        conversation: {
+          practiceId: authUser.practiceId,
+          OR: [
+            { participantAId: authUser.userId },
+            { participantBId: authUser.userId }
+          ]
+        }
+      }
+    });
+
+    return c.json({ unreadCount: count });
   } catch (error) { throw error; }
 };
 
-export const getMessages = async (c: Context) => {
+export const markAsRead = async (c: Context) => {
   try {
-    return c.json({ data: [] });
-  } catch (error) { throw error; }
-};
+    const authUser = c.get('user');
+    if (!authUser) return c.json({ error: 'Not authenticated' }, 401);
 
-export const sendMessage = async (c: Context) => {
-  try {
-    return c.json({ data: { id: 'temp-msg-id', content: (await c.req.json()).content } }, 201);
+    const conversationId = c.req.param('id') as string;
+
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+    });
+
+    if (!conversation || conversation.practiceId !== authUser.practiceId) {
+      return c.json({ error: 'Conversation not found' }, 404);
+    }
+
+    if (conversation.participantAId !== authUser.userId && conversation.participantBId !== authUser.userId) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    await prisma.conversationMessage.updateMany({
+      where: {
+        conversationId,
+        senderId: { not: authUser.userId },
+        readAt: null
+      },
+      data: { readAt: new Date() }
+    });
+
+    return c.json({ success: true });
   } catch (error) { throw error; }
 };

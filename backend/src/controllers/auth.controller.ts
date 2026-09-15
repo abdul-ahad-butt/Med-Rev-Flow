@@ -1,4 +1,5 @@
-import { Context } from 'hono';
+import { Context } from 'hono'; // re-trigger type check
+
 import bcrypt from 'bcryptjs';
 import { sign } from 'hono/jwt';
 import { prisma } from '../config/prisma';
@@ -45,6 +46,48 @@ export const login = async (c: Context) => {
     }
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+    // Phase 1: Auto-create conversation rows for users in the same account
+    if (user.practiceId) {
+      const practiceUsers = await prisma.user.findMany({
+        where: { practiceId: user.practiceId, id: { not: user.id }, isActive: true }
+      });
+      
+      const existingConvs = await prisma.conversation.findMany({
+        where: {
+          practiceId: user.practiceId,
+          OR: [{ participantAId: user.id }, { participantBId: user.id }]
+        }
+      });
+      
+      const existingUserIds = new Set<string>();
+      for (const conv of existingConvs) {
+        existingUserIds.add(conv.participantAId === user.id ? conv.participantBId : conv.participantAId);
+      }
+      
+      const toCreate = practiceUsers.filter((u: any) => !existingUserIds.has(u.id));
+      if (toCreate.length > 0) {
+        await Promise.all(toCreate.map((u: any) => {
+          const participantAId = user.id < u.id ? user.id : u.id;
+          const participantBId = user.id < u.id ? u.id : user.id;
+          return prisma.conversation.upsert({
+            where: {
+              practiceId_participantAId_participantBId: {
+                practiceId: user.practiceId!,
+                participantAId,
+                participantBId
+              }
+            },
+            update: {},
+            create: {
+              practiceId: user.practiceId!,
+              participantAId,
+              participantBId
+            }
+          });
+        }));
+      }
+    }
 
     const token = await sign({
       exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60,

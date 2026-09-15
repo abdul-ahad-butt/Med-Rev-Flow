@@ -1,25 +1,25 @@
 import { Hono } from 'hono';
 import {
-  getMessageList,
-  sendDirectMessage,
   getConversations,
-  createConversation,
   getMessages,
   sendMessage,
+  wsHandler,
+  getUnreadCount,
+  markAsRead
 } from '../controllers/messages.controller';
-import { authenticate, requirePermission } from '../middleware/auth';
-import { Permission } from '../middleware/permissions';
+import { authenticate } from '../middleware/auth';
 
 export const messagesRouter = new Hono();
 messagesRouter.use('*', authenticate);
-messagesRouter.use('*', requirePermission(Permission.VIEW_MESSAGES));
+// Removing requirePermission(Permission.VIEW_MESSAGES) as messaging should be available to all authenticated users in a practice.
 
-// The frontend calls GET /api/messages — this is the primary handler
-messagesRouter.get('/',    getMessageList);
-messagesRouter.post('/',   sendDirectMessage);
+messagesRouter.get('/conversations', getConversations);
+messagesRouter.get('/conversations/:id/messages', getMessages);
+messagesRouter.post('/conversations/:id/messages', sendMessage);
+messagesRouter.post('/conversations/:id/read', markAsRead);
 
-// Legacy /conversations sub-routes kept for backward compatibility
-messagesRouter.get('/conversations',                    getConversations);
-messagesRouter.post('/conversations',                   createConversation);
-messagesRouter.get('/conversations/:id/messages',       getMessages);
-messagesRouter.post('/conversations/:id/messages',      sendMessage);
+// Unread count
+messagesRouter.get('/unread-count', getUnreadCount);
+
+// Websocket upgrade endpoint
+messagesRouter.get('/conversations/:id/ws', wsHandler);

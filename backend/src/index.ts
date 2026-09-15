@@ -120,4 +120,5 @@ app.get('/api/seed', async (c) => {
 app.notFound((c) => c.json({ error: 'Route not found' }, 404));
 app.onError(errorHandler);
 
+export { ConversationRoom } from './durable-objects/conversation-room';
 export default app;

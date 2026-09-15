@@ -14,3 +14,12 @@ database_id = "e5e0a6c5-c167-423d-806f-4971b6635d27"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "med-rev-storage"
+
+[durable_objects]
+bindings = [
+  { name = "CONVERSATION_ROOM", class_name = "ConversationRoom" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ConversationRoom"]

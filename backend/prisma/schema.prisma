@@ -42,6 +42,7 @@ model Practice {
   priorAuths   PriorAuthorization[]
   campaigns    Campaign[]
   seoKeywords  SeoKeyword[]
+  conversations Conversation[]
 }
 
 model User {
@@ -68,6 +69,9 @@ model User {
   notifications     Notification[]
   messagesSent      Message[]  @relation("MessagesSent")
   messagesReceived  Message[]  @relation("MessagesReceived")
+  conversationsAsA  Conversation[] @relation("ConversationParticipantA")
+  conversationsAsB  Conversation[] @relation("ConversationParticipantB")
+  chatMessages      ConversationMessage[]  @relation("ConversationMessageSender")
 
   @@index([practiceId])
 }
@@ -466,4 +470,39 @@ model SeoKeyword {
   practice        Practice @relation(fields: [practiceId], references: [id])
 
   @@index([practiceId])
+}
+
+model Conversation {
+  id               String    @id @default(uuid())
+  practiceId       String
+  participantAId   String
+  participantBId   String
+  createdAt        DateTime  @default(now())
+  lastMessageAt    DateTime?
+
+  practice         Practice  @relation(fields: [practiceId], references: [id])
+  participantA     User                  @relation("ConversationParticipantA", fields: [participantAId], references: [id])
+  participantB     User                  @relation("ConversationParticipantB", fields: [participantBId], references: [id])
+  messages         ConversationMessage[]
+
+  @@unique([practiceId, participantAId, participantBId])
+  @@index([practiceId])
+  @@index([participantAId])
+  @@index([participantBId])
+}
+
+model ConversationMessage {
+  id               String       @id @default(uuid())
+  conversationId   String
+  senderId         String
+  body             String
+  createdAt        DateTime     @default(now())
+  readAt           DateTime?
+
+  conversation     Conversation @relation(fields: [conversationId], references: [id])
+  sender           User         @relation("ConversationMessageSender", fields: [senderId], references: [id])
+
+  @@map("messages")
+  @@index([conversationId])
+  @@index([senderId])
 }

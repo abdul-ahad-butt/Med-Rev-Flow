@@ -1,6 +1,6 @@
 import { hasPermission, Permission } from '../config/permissions';
-import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, TrendingUp, FileText, AlertCircle, DollarSign,
   Shield, Users, Calendar, UserCog, Building2, LineChart, BarChart3,
@@ -38,6 +38,16 @@ export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (user && hasPermission(user.role, Permission.VIEW_MESSAGES)) {
+      api.get('/messages/unread-count')
+        .then(res => setUnreadCount(res.data.unreadCount || 0))
+        .catch(console.error)
+    }
+  }, [user, location.pathname])
 
   const handleLogout = async () => {
     try {
@@ -165,9 +175,13 @@ export function AppLayout() {
             )}
 
             {/* Notifications */}
-            <NavLink to="/app/dashboard" className="relative p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+            <NavLink to="/app/messages" className="relative p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
               <Bell className="w-4 h-4" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-medium">3</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </NavLink>
           </div>
         </header>
