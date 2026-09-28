@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
-import { Shield, LayoutDashboard, Building2, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, LogOut, Activity } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -27,7 +27,7 @@ export function AdminLayout() {
       <div className="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 left-0 z-50">
         <div className="h-16 flex items-center gap-3 px-6 bg-slate-950">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
+            <Activity className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold tracking-wide">Platform Admin</span>
         </div>

@@ -22,7 +22,22 @@ export const errorHandler = (err: Error | AppError, c: Context) => {
 
   console.error('[ERROR]', err);
 
-  const origin = (c.env as any)?.FRONTEND_URL || 'https://med-rev-flow.pages.dev';
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'https://med-rev-flow.pages.dev',
+    'https://super-admin-med-rev-flow.pages.dev'
+  ];
+  const envOrigin = (c.env as any)?.FRONTEND_URL;
+  if (envOrigin && !allowedOrigins.includes(envOrigin)) {
+    allowedOrigins.push(envOrigin);
+  }
+  
+  const reqOrigin = c.req.header('origin');
+  const origin = reqOrigin && allowedOrigins.includes(reqOrigin) ? reqOrigin : (reqOrigin || allowedOrigins[0]);
+  
   c.header('Access-Control-Allow-Origin', origin);
   c.header('Access-Control-Allow-Credentials', 'true');
 

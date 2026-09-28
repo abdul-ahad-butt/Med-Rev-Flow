@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Shield, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../api/client';
 import { useAuthStore } from '../../store/auth.store';
@@ -52,8 +52,8 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="mb-8 flex flex-col items-center text-center">
-            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mb-4">
-              <Shield className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
+              <Activity className="w-6 h-6 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900">Platform Admin</h2>
             <p className="text-sm text-slate-500 mt-1">Sign in to manage practices and billing</p>
