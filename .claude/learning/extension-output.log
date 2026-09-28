@@ -1,0 +1,101 @@
+[2026-09-28T17:35:12.148Z] Project profile: Solo developer — Git analysis: 175 tracked files, 1 branch (1 local, 1 remote), 47 commits (47 last 30d), 1 author (30d), high activity, ~4 KB git objects, 12d old. Remote git (https://github.com/abdul-ahad-butt/Med-Rev-Flow.git): 1 remote branch, 1 remote author (30d), via remote-tracking. Solo, low-intensity product — branch profiles with token-saving focus.
+[2026-09-28T17:35:14.738Z] Attribution v2 hooks installed (claude/cursor/kiro/copilot as enabled).
+[2026-09-28T17:35:15.581Z] Task proposals refreshed locally (3 skills).
+[2026-09-28T17:35:16.263Z] Task skill focus: 8 active, 0 ignored for this task.
+[2026-09-28T17:35:17.141Z] Propagated focused skill set to 9 Cursor/Kiro/Copilot path(s).
+[2026-09-28T17:35:23.545Z] 
+=== Task proposals auto-apply (local workspace) ===
++5 installed, 0 enabled locally: self-learning, file-style-conventions, skill-creator, skill-usage-insights, skill-official-updater
+[2026-09-28T17:35:24.735Z] Official skills SessionStart hook installed.
+[2026-09-28T17:35:24.842Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:35:25.613Z] Propagated workspace skills to 24 other agent path(s) (cursor/kiro/copilot).
+[2026-09-28T17:35:25.631Z] Task proposals auto-applied (5 installed, 0 enabled).
+[2026-09-28T17:35:25.642Z] Claude Skills: 1 outdated skill(s) — github-actions-ci (1.0.0 → 1.0.1). Upgrade from the library?
+[2026-09-28T17:35:25.659Z] Filesystem MCP server: active — all agents already configured.
+[2026-09-28T17:35:25.665Z] CLI MCP server: workspace log path refreshed (1 dir(s)).
+[2026-09-28T17:35:25.669Z] CLI loop-guard hook installed.
+[2026-09-28T17:35:25.670Z] CLI MCP server: already configured — agents can connect.
+[2026-09-28T17:35:25.732Z] Dir cache guard hook installed.
+[2026-09-28T17:35:38.877Z] Attribution v2 hooks updated (claude/cursor/kiro/copilot as enabled).
+[2026-09-28T17:35:41.864Z] Mirrored cost-discipline artifacts: cursor:cli-config.json, cursor:project-profile.json, cursor:runs.snapshot.json, cursor:task-active-skills.json, cursor:task-proposals-apply-state.json, kiro:cli-config.json, kiro:project-profile.json, kiro:runs.snapshot.json, kiro:task-active-skills.json, kiro:task-proposals-apply-state.json.
+[2026-09-28T17:35:41.956Z] Propagated focused skill set to 24 Cursor/Kiro/Copilot path(s).
+[2026-09-28T17:35:42.166Z] 
+=== Scheduled skill set resolver ===
+[2026-09-28T17:35:42.168Z] ## Skill set resolver plan
+
+### Install (relevant, missing)
+- deployment-practical: matches workspace detect_globs
+- github-actions-ci: matches workspace detect_globs
+- skill-feedback-adaptation: matches workspace detect_globs
+
+[2026-09-28T17:35:42.169Z] Installed: deployment-practical, github-actions-ci, skill-feedback-adaptation
+[2026-09-28T17:35:51.431Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:35:51.991Z] Propagated workspace skills to 24 other agent path(s) (cursor/kiro/copilot).
+[2026-09-28T17:35:52.007Z] Skill set resolver — installed 3.
+[2026-09-28T17:36:04.663Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:36:22.540Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:36:44.814Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:01.334Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:14.285Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:21.454Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:30.059Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:34.840Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:41.898Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:47.065Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:53.185Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:37:57.269Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:02.648Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:07.743Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:12.831Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:18.779Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:23.491Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:28.592Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:34.289Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:40.464Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:46.379Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:51.644Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:38:56.409Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:02.050Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:07.491Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:16.832Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:25.317Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:29.677Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:34.947Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:40.617Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:45.423Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:50.765Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:39:57.450Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:02.490Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:09.107Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:13.200Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:19.200Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:24.363Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:29.393Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:35.168Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:40.034Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:45.313Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:50.903Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:40:55.961Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:00.956Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:06.238Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:11.778Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:16.924Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:22.841Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:27.802Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:33.013Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:38.295Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:43.479Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:48.781Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:54.215Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:41:59.380Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:04.691Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:09.875Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:15.458Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:17.517Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:23.445Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:28.635Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:33.891Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:39.451Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:45.168Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:49.966Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
+[2026-09-28T17:42:55.082Z] Cost control hook scripts refreshed across Claude, Cursor, Kiro, and Copilot paths.
