@@ -70,7 +70,7 @@ export function LoginPage() {
                 autoComplete="email"
                 placeholder="admin@medrevflow.com"
                 {...register('email')}
-                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
               {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
             </div>
@@ -86,7 +86,7 @@ export function LoginPage() {
                   autoComplete="current-password"
                   placeholder="••••••••"
                   {...register('password')}
-                  className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent pr-10"
+                  className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 pr-10"
                 />
                 <button
                   type="button"
