@@ -8,5 +8,6 @@ test.sql
 
 .claude/
 .cursor/
+.kiro/
 .github/instructions/
 .github/copilot-instructions.md
