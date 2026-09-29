@@ -33,8 +33,8 @@ export function ContactPage() {
             <div className="space-y-6">
               <div>
                 <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">Support Email</h3>
-                <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline font-medium">
-                  abdullah.butt420@gmail.com
+                <a href="mailto:abdulahadbutt420@gmail.com" className="text-blue-600 hover:underline font-medium">
+                  abdulahadbutt420@gmail.com
                 </a>
               </div>
               

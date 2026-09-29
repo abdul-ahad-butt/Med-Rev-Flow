@@ -40,7 +40,7 @@ export function Footer() {
         
         <div className="mt-12 pt-8 border-t border-slate-800 text-sm text-slate-500 text-center">
           <p>
-            © 2026 MedRevFlow. Payments processed securely by Paddle.com, Merchant of Record. Support contact: <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-400 hover:underline">abdullah.butt420@gmail.com</a>
+            © 2026 MedRevFlow. Payments processed securely by Paddle.com, Merchant of Record. Support contact: <a href="mailto:abdulahadbutt420@gmail.com" className="text-blue-400 hover:underline">abdulahadbutt420@gmail.com</a>
           </p>
         </div>
       </div>

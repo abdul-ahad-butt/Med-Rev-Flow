@@ -39,7 +39,7 @@ export function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Support Contact</h2>
             <p>
-              User support inquiries regarding platform usage can be sent to <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline">abdullah.butt420@gmail.com</a>.
+              User support inquiries regarding platform usage can be sent to <a href="mailto:abdulahadbutt420@gmail.com" className="text-blue-600 hover:underline">abdulahadbutt420@gmail.com</a>.
             </p>
           </section>
 

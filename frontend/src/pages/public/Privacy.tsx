@@ -32,7 +32,7 @@ export function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Contact Details</h2>
             <p>
-              For privacy or data access requests, please contact us at <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline">abdullah.butt420@gmail.com</a>.
+              For privacy or data access requests, please contact us at <a href="mailto:abdulahadbutt420@gmail.com" className="text-blue-600 hover:underline">abdulahadbutt420@gmail.com</a>.
             </p>
           </section>
         </div>

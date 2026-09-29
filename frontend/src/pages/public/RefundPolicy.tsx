@@ -9,7 +9,7 @@ export function RefundPolicyPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Subscription Cancellation</h2>
             <p>
-              Users can cancel subscriptions anytime via practice settings or by emailing support at <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline">abdullah.butt420@gmail.com</a>.
+              Users can cancel subscriptions anytime via practice settings or by emailing support at <a href="mailto:abdulahadbutt420@gmail.com" className="text-blue-600 hover:underline">abdulahadbutt420@gmail.com</a>.
             </p>
           </section>
 
@@ -17,7 +17,7 @@ export function RefundPolicyPage() {
             <h2 className="text-xl font-semibold text-slate-900 mb-3">14-Day Guarantee</h2>
             <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg mb-4">
               <p className="text-blue-900 font-medium italic">
-                We offer a 14-day money-back guarantee for initial subscription plans. To request a refund, contact us at abdullah.butt420@gmail.com or Paddle directly at paddle.net.
+                We offer a 14-day money-back guarantee for initial subscription plans. To request a refund, contact us at abdulahadbutt420@gmail.com or Paddle directly at paddle.net.
               </p>
             </div>
           </section>
