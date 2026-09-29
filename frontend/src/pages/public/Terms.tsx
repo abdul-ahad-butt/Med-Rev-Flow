@@ -9,7 +9,7 @@ export function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Overview</h2>
             <p>
-              MedRevFlow provides cloud-based medical billing, invoice generation, revenue cycle tracking, and practice management software.
+              MedRevFlow provides cloud-based medical billing, practice management, and revenue cycle management software.
             </p>
           </section>
 

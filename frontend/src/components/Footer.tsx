@@ -24,6 +24,7 @@ export function Footer() {
               <li><Link to="/terms" className="hover:text-blue-400 transition-colors">Terms of Service</Link></li>
               <li><Link to="/privacy" className="hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
               <li><Link to="/refund-policy" className="hover:text-blue-400 transition-colors">Refund Policy</Link></li>
+              <li><Link to="/pricing" className="hover:text-blue-400 transition-colors">Pricing</Link></li>
               <li><Link to="/contact" className="hover:text-blue-400 transition-colors">Contact Support</Link></li>
             </ul>
           </div>
@@ -37,10 +38,9 @@ export function Footer() {
           </div>
         </div>
         
-        <div className="mt-12 pt-8 border-t border-slate-800 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© {new Date().getFullYear()} MedRevFlow. All rights reserved.</p>
-          <p className="text-center md:text-right text-xs">
-            Payments processed securely by Paddle.com, Merchant of Record. Support contact: <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-400 hover:underline">abdullah.butt420@gmail.com</a>
+        <div className="mt-12 pt-8 border-t border-slate-800 text-sm text-slate-500 text-center">
+          <p>
+            © 2026 MedRevFlow. Payments processed securely by Paddle.com, Merchant of Record. Support contact: <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-400 hover:underline">abdullah.butt420@gmail.com</a>
           </p>
         </div>
       </div>

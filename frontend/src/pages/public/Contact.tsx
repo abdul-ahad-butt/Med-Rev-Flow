@@ -44,8 +44,8 @@ export function ContactPage() {
               </div>
               
               <div>
-                <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">Expected Response SLA</h3>
-                <p className="text-slate-700 font-medium">Within 24 hours on business days</p>
+                <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-2">Response Time</h3>
+                <p className="text-slate-700 font-medium">24-48 hours</p>
               </div>
             </div>
           </div>
@@ -87,8 +87,8 @@ export function ContactPage() {
                 >
                   <option value="">Select a category</option>
                   <option value="billing">Billing</option>
-                  <option value="technical">Technical Support</option>
-                  <option value="sales">Sales Inquiry</option>
+                  <option value="technical">Technical</option>
+                  <option value="general">General</option>
                 </select>
               </div>
 

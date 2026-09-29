@@ -9,15 +9,15 @@ export function RefundPolicyPage() {
           <section>
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Subscription Cancellation</h2>
             <p>
-              Users can cancel their subscription at any time directly from their public user account settings or by emailing <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline">abdullah.butt420@gmail.com</a>. Cancellation takes effect at the end of the active billing cycle.
+              Users can cancel subscriptions anytime via practice settings or by emailing support at <a href="mailto:abdullah.butt420@gmail.com" className="text-blue-600 hover:underline">abdullah.butt420@gmail.com</a>.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-slate-900 mb-3">Refund Terms (Paddle Compliant)</h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-3">14-Day Guarantee</h2>
             <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg mb-4">
               <p className="text-blue-900 font-medium italic">
-                We offer a 14-day money-back guarantee for initial subscription purchases. To request a refund within 14 days of purchase, please email us at abdullah.butt420@gmail.com or contact Paddle directly at paddle.net.
+                We offer a 14-day money-back guarantee for initial subscription plans. To request a refund, contact us at abdullah.butt420@gmail.com or Paddle directly at paddle.net.
               </p>
             </div>
           </section>

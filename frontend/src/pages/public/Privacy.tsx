@@ -7,16 +7,9 @@ export function PrivacyPage() {
         
         <div className="space-y-8 text-slate-700 leading-relaxed">
           <section>
-            <h2 className="text-xl font-semibold text-slate-900 mb-3">Data Collection</h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-3">Data Handling</h2>
             <p>
-              We collect Account details, practice details, and user activity logs to provide and improve our services.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-slate-900 mb-3">Data Usage</h2>
-            <p>
-              Data is used strictly to deliver medical billing SaaS features and maintain platform security.
+              We practice standard HIPAA-conscious data isolation and encrypted storage practices for medical practice data.
             </p>
           </section>
 
@@ -24,7 +17,7 @@ export function PrivacyPage() {
             <h2 className="text-xl font-semibold text-slate-900 mb-3">Payment Processing</h2>
             <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg">
               <p className="text-blue-900 font-medium italic">
-                We do not store full credit card details on our servers. Payment processing is safely handled by Paddle.com as our Merchant of Record.
+                We do not store credit card details on our servers. Payment processing and subscription management are safely handled by Paddle.com as our Merchant of Record.
               </p>
             </div>
           </section>

@@ -10,6 +10,7 @@ import { TermsPage } from './pages/public/Terms'
 import { PrivacyPage } from './pages/public/Privacy'
 import { RefundPolicyPage } from './pages/public/RefundPolicy'
 import { ContactPage } from './pages/public/Contact'
+import { PricingPage } from './pages/public/Pricing'
 import { DashboardPage } from './pages/Dashboard'
 import { ClaimsPage } from './pages/Claims'
 import { ClaimDetailPage } from './pages/ClaimDetail'
@@ -57,14 +58,15 @@ export default function App() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ProtectedRoute allowPasswordChange><ChangePassword /></ProtectedRoute>} />
 
       <Route element={<PublicLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/contact" element={<ContactPage />} />
       </Route>
 

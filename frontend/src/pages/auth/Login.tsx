@@ -57,7 +57,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex">
+    <div className="flex-1 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex">
       {/* Left panel */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12 text-white">
         <div className="flex items-center gap-3">
@@ -91,9 +91,7 @@ export function LoginPage() {
           </div>
         </div>
 
-        <p className="text-sm text-slate-500">
-          © 2024 MedRevFlow. HIPAA-conscious architecture. SOC 2 aligned.
-        </p>
+        <div /> {/* Empty div to keep justify-between spacing */}
       </div>
 
       {/* Right panel - Login form */}
