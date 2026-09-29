@@ -2,9 +2,14 @@ import { hasPermission, Permission, getDefaultRouteForRole } from './config/perm
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth.store'
 import { AppLayout } from './layouts/AppLayout'
+import { PublicLayout } from './layouts/PublicLayout'
 import { LandingPage } from './pages/Landing'
 import { LoginPage } from './pages/auth/Login'
 import ChangePassword from './pages/auth/ChangePassword'
+import { TermsPage } from './pages/public/Terms'
+import { PrivacyPage } from './pages/public/Privacy'
+import { RefundPolicyPage } from './pages/public/RefundPolicy'
+import { ContactPage } from './pages/public/Contact'
 import { DashboardPage } from './pages/Dashboard'
 import { ClaimsPage } from './pages/Claims'
 import { ClaimDetailPage } from './pages/ClaimDetail'
@@ -55,6 +60,13 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ProtectedRoute allowPasswordChange><ChangePassword /></ProtectedRoute>} />
+
+      <Route element={<PublicLayout />}>
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+      </Route>
 
       {/* Protected App */}
       <Route path="/app" element={
